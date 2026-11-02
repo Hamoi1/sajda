@@ -42,7 +42,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       # tauri::generate_context! embeds the built frontend, so dist must exist.
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist
