@@ -104,3 +104,46 @@ export const IconCheck = (p: IconProps) => (
     <path d="M4 10.5l4 4 8-9" />
   </Base>
 );
+
+export const IconPlace = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M10 18s-6-5.2-6-9.5A6 6 0 0 1 16 8.5C16 12.8 10 18 10 18Z" />
+    <path d="M10 10.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" />
+  </Base>
+);
+
+export const IconMethod = (p: IconProps) => (
+  <Base {...p}>
+    <rect x="4" y="3" width="12" height="14" />
+    <path d="M6.5 6h7" />
+    <path d="M7 10h1.5M9.25 10h1.5M11.5 10H13M7 13.5h1.5M9.25 13.5h1.5M11.5 13.5H13" />
+  </Base>
+);
+
+export const IconVolume = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M4 8v4h3l4 3.5v-11L7 8H4Z" />
+    <path d="M13.5 7.5a3.5 3.5 0 0 1 0 5" />
+  </Base>
+);
+
+export const IconDisplay = (p: IconProps) => (
+  <Base {...p}>
+    <rect x="3" y="4" width="14" height="9" />
+    <path d="M7 16.5h6" />
+  </Base>
+);
+
+export const IconBook = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M10 5.5C8.5 4 6 3.5 3.5 3.5v11c2.5 0 5 .5 6.5 2 1.5-1.5 4-2 6.5-2v-11C14 3.5 11.5 4 10 5.5Z" />
+    <path d="M10 5.5v11" />
+  </Base>
+);
+
+export const IconCog = (p: IconProps) => (
+  <Base {...p}>
+    <circle cx="10" cy="10" r="2.5" />
+    <path d="M10 3v2M10 15v2M3 10h2M15 10h2M5 5l1.4 1.4M13.6 13.6 15 15M15 5l-1.4 1.4M6.4 13.6 5 15" />
+  </Base>
+);

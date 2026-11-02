@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Sajda",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "identifier": "com.sajda.app",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -22,7 +22,7 @@
         "minHeight": 580,
         "decorations": false,
         "transparent": false,
-        "backgroundColor": "#1b1714",
+        "backgroundColor": "#161c36",
         "center": true,
         "visible": false
       },
@@ -42,10 +42,27 @@
         "minimizable": false,
         "focus": false,
         "visible": false
+      },
+      {
+        "label": "reader",
+        "title": "Sajda Reader",
+        "url": "index.html",
+        "width": 1000,
+        "height": 720,
+        "decorations": false,
+        "transparent": false,
+        "backgroundColor": "#10142a",
+        "alwaysOnTop": false,
+        "skipTaskbar": true,
+        "resizable": false,
+        "maximizable": false,
+        "minimizable": false,
+        "focus": false,
+        "visible": false
       }
     ],
     "security": {
-      "csp": "default-src 'self'; connect-src 'self' ipc: http://ipc.localhost; img-src 'self' data:; media-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; font-src 'self' data:",
+      "csp": "default-src 'self'; connect-src 'self' ipc: http://ipc.localhost https://api.github.com; img-src 'self' data:; media-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; font-src 'self' data:",
       "devCsp": null
     }
   },

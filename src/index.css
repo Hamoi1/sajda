@@ -1,59 +1,102 @@
 @import "tailwindcss";
 @import "@fontsource-variable/vazirmatn";
+@import "@fontsource/noto-naskh-arabic/400.css";
+@import "@fontsource/noto-naskh-arabic/600.css";
 
 /*
-  Kilim direction (see DESIGN.md): undyed wool, madder red, indigo.
-  Three cores + neutrals; madder is the single accent and marks only the next prayer
-  and the title bar.
+  Indigo Night + Gold (see DESIGN.md), refined with glass surfaces and warm gold
+  per the master spec. Dark: midnight navy, obsidian glass, warm gold.
+  Light: warm alabaster, ivory, antique bronze-gold.
+  Gold stays the single accent: next prayer, countdown, progress, active states.
 */
 :root,
 :root[data-theme="light"] {
-  --wool: #f1e9da;
-  --wool-rgb: 241 233 218;
-  --wool-2: #e7dcc6;
-  --line: #d6c7ac;
-  --ink: #2a211b;
-  --ink-soft: #5b4c3f;
-  --madder: #9e2b25;
-  --on-madder: #f8f0e2;
-  --indigo: #23325b;
-  --weave-ground: #23325b;
-  --bg-dawn: #ebe6df;
-  --bg-day: #f1e9da;
-  --bg-dusk: #f3e3d4;
-  --bg-night: #e6dccb;
+  --surface: #f4f1ea;
+  --surface-rgb: 244 241 234;
+  --surface-2: #eae5d9;
+  --line: rgb(15 23 42 / 0.08);
+  --line-strong: #ddd5c2;
+  --ink: #0f172a;
+  --ink-soft: #475569;
+  --ink-muted: #94a3b8;
+  --gold: #b5892e;
+  --gold-bright: #d4ac50;
+  --accent-text: #8a6519;
+  --on-gold: #ffffff;
+  --indigo: #303a7c;
+  --on-indigo: #f2f4fc;
+  --deep: #2b3565;
+  --deep-2: #34407f;
+  --bg-input: #ffffff;
+  --accent-gradient: linear-gradient(135deg, #d4ac50 0%, #b08328 100%);
+  --accent-muted: rgb(181 137 46 / 0.12);
+  --accent-glow: 0 8px 24px -4px rgb(181 137 46 / 0.22);
+  --focus-ring: rgb(181 137 46 / 0.6);
+  --shadow-card: 0 4px 16px -2px rgb(15 23 42 / 0.06);
+  /* Washes: indigo at low strength, so panels tint instead of turning muddy. */
+  --veil: rgb(43 53 101 / 0.06);
+  --tile: rgb(43 53 101 / 0.05);
+  --tile-2: rgb(43 53 101 / 0.1);
+  --bg-dawn: #f7f0e0;
+  --bg-day: #f4f1ea;
+  --bg-dusk: #f5ecda;
+  --bg-night: #efece1;
   color-scheme: light;
 }
 
 :root[data-theme="dark"] {
-  --wool: #1b1714;
-  --wool-rgb: 27 23 20;
-  --wool-2: #28211c;
-  --line: #43392f;
-  --ink: #f0e7d8;
-  --ink-soft: #c2b29d;
-  --madder: #a83a32;
-  --on-madder: #fff5ea;
-  --indigo: #b4c3ec;
-  /* The dye stays deep in the weave; only text indigo lightens for contrast. */
-  --weave-ground: #2b3a68;
-  --bg-dawn: #1a181a;
-  --bg-day: #1b1714;
-  --bg-dusk: #211814;
-  --bg-night: #141210;
+  --surface: #0d1322;
+  --surface-rgb: 20 29 49;
+  --surface-2: rgb(38 53 84 / 0.65);
+  --line: rgb(255 255 255 / 0.07);
+  --line-strong: rgb(255 255 255 / 0.14);
+  --ink: #f8fafc;
+  --ink-soft: #94a3b8;
+  --ink-muted: #64748b;
+  --gold: #dfb85b;
+  --gold-bright: #e9c874;
+  --accent-text: #dfb85b;
+  --on-gold: #0b101d;
+  --indigo: #3d4c8c;
+  --on-indigo: #f2f4fc;
+  --deep: #131a2e;
+  --deep-2: #1e2748;
+  --bg-input: #0b101d;
+  --accent-gradient: linear-gradient(135deg, #e5c168 0%, #c69b38 100%);
+  --accent-muted: rgb(223 184 91 / 0.14);
+  --accent-glow: 0 8px 28px -4px rgb(223 184 91 / 0.18);
+  --focus-ring: rgb(223 184 91 / 0.55);
+  --shadow-card: 0 4px 20px -2px rgb(0 0 0 / 0.35);
+  /* The night sky deepens with the prayer period; the gold stays constant. */
+  --veil: rgb(30 39 72 / 0.55);
+  --tile: rgb(30 39 72 / 0.45);
+  --tile-2: rgb(36 46 88 / 0.6);
+  --bg-dawn: #10182c;
+  --bg-day: #0d1322;
+  --bg-dusk: #12101f;
+  --bg-night: #090d16;
   color-scheme: dark;
 }
 
 @theme inline {
-  --color-wool: var(--wool);
-  --color-wool-2: var(--wool-2);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
   --color-line: var(--line);
   --color-ink: var(--ink);
   --color-ink-soft: var(--ink-soft);
-  --color-madder: var(--madder);
-  --color-on-madder: var(--on-madder);
+  --color-gold: var(--gold);
+  --color-gold-bright: var(--gold-bright);
+  --color-accent: var(--accent-text);
+  --color-on-gold: var(--on-gold);
   --color-indigo: var(--indigo);
+  --color-on-indigo: var(--on-indigo);
+  --color-deep: var(--deep);
+  --color-deep-2: var(--deep-2);
+  --color-veil: var(--veil);
+  --color-tile: var(--tile);
+  --color-tile-2: var(--tile-2);
   --font-sans: "Vazirmatn Variable", "Noto Sans Arabic", Tahoma, system-ui, sans-serif;
+  --font-quran: "Noto Naskh Arabic", "Vazirmatn Variable", serif;
 }
 
 html,
@@ -66,7 +109,7 @@ body,
 body {
   font-family: var(--font-sans);
   color: var(--ink);
-  background: var(--wool);
+  background: var(--surface);
   -webkit-font-smoothing: antialiased;
   user-select: none;
   overflow: hidden;
@@ -91,13 +134,73 @@ body {
 .period-night { background-color: var(--bg-night); }
 .ambient { transition: background-color 2s ease; }
 
+/* Sleek custom scrollbars everywhere. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--line-strong);
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--gold);
+}
+
+/* Gold range sliders: slim track, round gold thumb that grows when grabbed. */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--tile-2);
+  outline-offset: 4px;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--accent-gradient);
+  border: none;
+  box-shadow: var(--accent-glow);
+  transition: transform 120ms ease;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.12);
+}
+input[type="range"]::-webkit-slider-thumb:active {
+  transform: scale(1.2);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--gold);
+  border: none;
+  cursor: pointer;
+}
+
 :focus-visible {
-  outline: 2px solid var(--indigo);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
-.on-madder :focus-visible,
-.on-madder:focus-visible {
-  outline-color: var(--on-madder);
+.on-gold :focus-visible,
+.on-gold:focus-visible {
+  outline-color: var(--on-gold);
+}
+.on-deep :focus-visible,
+.on-deep:focus-visible {
+  outline-color: var(--gold-bright);
 }
 
 /* In the base layer so Tailwind utilities (e.g. ps-9 on the search box) can override them. */
@@ -110,26 +213,105 @@ body {
     color: inherit;
   }
 
+  /* Every clickable thing gets the system pointer cursor. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="switch"],
+  summary,
+  label:has(input:not(:disabled)),
+  select:not(:disabled),
+  a[href] {
+    cursor: pointer;
+  }
+  button:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+
   input[type="checkbox"],
-  input[type="radio"],
-  input[type="range"] {
-    accent-color: var(--madder);
+  input[type="radio"] {
+    accent-color: var(--gold);
   }
 
   input[type="text"],
   input[type="number"],
   input[type="search"],
   select {
-    background: var(--wool);
-    border: 1px solid var(--line);
-    border-radius: 4px;
-    padding: 6px 8px;
+    background: var(--bg-input);
+    border: 1px solid var(--line-strong);
+    border-radius: 10px;
+    padding: 8px 10px;
     user-select: text;
+    transition: border-color 150ms ease;
+  }
+  input[type="text"]:focus,
+  input[type="number"]:focus,
+  input[type="search"]:focus,
+  select:focus {
+    border-color: var(--focus-ring);
+    outline: none;
   }
 
   dialog::backdrop {
-    background: rgb(20 14 10 / 0.45);
+    background: rgb(5 8 16 / 0.55);
+    backdrop-filter: blur(2px);
   }
+}
+
+/* Naskh for ayat: generous line height so diacritics never collide. */
+.quran-text {
+  font-family: var(--font-quran);
+  line-height: 2.2;
+  word-spacing: 0.06em;
+}
+
+/* View transitions: fade + slide when switching tabs or settings pages. */
+@keyframes view-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.view-enter {
+  animation: view-enter 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* A revealed ayah drifts in. */
+@keyframes ayah-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.ayah-enter {
+  animation: ayah-enter 380ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* The tasbih count pops on every tap. */
+@keyframes count-pop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+.count-pop {
+  animation: count-pop 140ms ease-out;
+}
+
+/* The progress needle breathes: a soft gold halo. */
+@keyframes needle-halo {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(223 184 91 / 0.35), var(--accent-glow); }
+  50% { box-shadow: 0 0 0 6px rgb(223 184 91 / 0), var(--accent-glow); }
+}
+.needle-halo {
+  animation: needle-halo 2.6s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {

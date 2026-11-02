@@ -4,12 +4,17 @@ import { getCurrentWebviewWindow, WebviewWindow } from "@tauri-apps/api/webviewW
 /** False when the UI runs in a plain browser (vite dev preview), so Tauri calls are skipped. */
 export const inTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
-export type WindowLabel = "main" | "widget";
+export type WindowLabel = "main" | "widget" | "reader";
 
 export function currentLabel(): WindowLabel {
-  if (inTauri) return getCurrentWebviewWindow().label === "widget" ? "widget" : "main";
-  // Browser preview: open /?widget to see the widget.
-  return new URLSearchParams(window.location.search).has("widget") ? "widget" : "main";
+  if (inTauri) {
+    const label = getCurrentWebviewWindow().label;
+    return label === "widget" || label === "reader" ? label : "main";
+  }
+  // Browser preview: open /?widget or /?reader to see those windows.
+  const params = new URLSearchParams(window.location.search);
+  if (params.has("reader")) return "reader";
+  return params.has("widget") ? "widget" : "main";
 }
 
 export async function emitEvent(event: string, payload?: unknown): Promise<void> {

@@ -1,13 +1,52 @@
-import type { SoundMode } from "./types";
+import type { Lang, SoundMode } from "./types";
 
-/** Optional user-supplied recording. Lives in public/ so a missing file never breaks the build. */
-export const ADHAN_URL = "/audio/adhan.mp3";
+/** One bundled adhan recording, all taken from the Bang (بانگ) app's own library. */
+export interface AdhanVoice {
+  file: string;
+  label: Record<Lang, string>;
+}
+
+export const ADHAN_VOICES: AdhanVoice[] = [
+  { file: "bangtawaw1.mp3", label: { ckb: "بانگی تەواو ١", ar: "الأذان الكامل ١", en: "Full adhan 1" } },
+  { file: "bangtawaw2.mp3", label: { ckb: "بانگی تەواو ٢", ar: "الأذان الكامل ٢", en: "Full adhan 2" } },
+  { file: "bangtawaw3.mp3", label: { ckb: "بانگی تەواو ٣", ar: "الأذان الكامل ٣", en: "Full adhan 3" } },
+  { file: "bangtawaw4.mp3", label: { ckb: "بانگی تەواو ٤", ar: "الأذان الكامل ٤", en: "Full adhan 4" } },
+  { file: "bangtawaw5.mp3", label: { ckb: "بانگی تەواو ٥", ar: "الأذان الكامل ٥", en: "Full adhan 5" } },
+  { file: "bangtawaw6.mp3", label: { ckb: "بانگی تەواو ٦", ar: "الأذان الكامل ٦", en: "Full adhan 6" } },
+  { file: "bang1.mp3", label: { ckb: "بانگ ١", ar: "أذان ١", en: "Adhan 1" } },
+  { file: "bang2.mp3", label: { ckb: "بانگ ٢", ar: "أذان ٢", en: "Adhan 2" } },
+  { file: "bang3.mp3", label: { ckb: "بانگ ٣", ar: "أذان ٣", en: "Adhan 3" } },
+  { file: "bang4.mp3", label: { ckb: "بانگ ٤", ar: "أذان ٤", en: "Adhan 4" } },
+  { file: "bang5.mp3", label: { ckb: "بانگ ٥", ar: "أذان ٥", en: "Adhan 5" } },
+  { file: "bang6.mp3", label: { ckb: "بانگ ٦", ar: "أذان ٦", en: "Adhan 6" } },
+  { file: "bang7.mp3", label: { ckb: "بانگ ٧", ar: "أذان ٧", en: "Adhan 7" } },
+  { file: "bang8.mp3", label: { ckb: "بانگ ٨", ar: "أذان ٨", en: "Adhan 8" } },
+  { file: "bang9.mp3", label: { ckb: "بانگ ٩", ar: "أذان ٩", en: "Adhan 9" } },
+  { file: "bang10.mp3", label: { ckb: "بانگ ١٠", ar: "أذان ١٠", en: "Adhan 10" } },
+  { file: "bang11.mp3", label: { ckb: "بانگ ١١", ar: "أذان ١١", en: "Adhan 11" } },
+  { file: "bang12.mp3", label: { ckb: "بانگ ١٢", ar: "أذان ١٢", en: "Adhan 12" } },
+  { file: "bang13.mp3", label: { ckb: "بانگ ١٣", ar: "أذان ١٣", en: "Adhan 13" } },
+  { file: "bang14.mp3", label: { ckb: "بانگ ١٤", ar: "أذان ١٤", en: "Adhan 14" } },
+  { file: "makka01.mp3", label: { ckb: "مەککە", ar: "مكة", en: "Makkah" } },
+  { file: "abdulrahman01.mp3", label: { ckb: "عەبدولڕەحمان", ar: "عبد الرحمن", en: "Abdulrahman" } },
+  { file: "peshawa01.mp3", label: { ckb: "پێشەوا", ar: "بيشوا", en: "Peshawa" } },
+];
+
+export const DEFAULT_ADHAN_FILE = "bangtawaw1.mp3";
+
+export function adhanVoice(file: string): AdhanVoice {
+  return ADHAN_VOICES.find((v) => v.file === file) ?? ADHAN_VOICES[0]!;
+}
+
+function adhanUrl(file: string): string {
+  return `/audio/adhan/${file}`;
+}
 
 type Listener = (playing: boolean) => void;
 
 let stopCurrent: (() => void) | null = null;
 const listeners = new Set<Listener>();
-let adhanCheck: Promise<boolean> | null = null;
+const availability = new Map<string, Promise<boolean>>();
 
 function setPlaying(playing: boolean) {
   listeners.forEach((fn) => fn(playing));
@@ -18,12 +57,14 @@ export function onPlayingChange(fn: Listener): () => void {
   return () => listeners.delete(fn);
 }
 
-/** Checks once whether public/audio/adhan.mp3 exists and is audio (dev servers may answer with HTML). */
-export function adhanAvailable(): Promise<boolean> {
-  adhanCheck ??= fetch(ADHAN_URL, { method: "HEAD", cache: "no-store" })
+/** Checks once per file whether the recording exists and is audio (dev servers may answer with HTML). */
+export function adhanAvailable(file: string = DEFAULT_ADHAN_FILE): Promise<boolean> {
+  let check = availability.get(file);
+  check ??= fetch(adhanUrl(file), { method: "HEAD", cache: "no-store" })
     .then((res) => res.ok && (res.headers.get("content-type") ?? "").startsWith("audio"))
     .catch(() => false);
-  return adhanCheck;
+  availability.set(file, check);
+  return check;
 }
 
 export function stopSound(): void {
@@ -32,19 +73,19 @@ export function stopSound(): void {
   setPlaying(false);
 }
 
-export async function playSound(mode: SoundMode, volume: number): Promise<void> {
+export async function playSound(mode: SoundMode, volume: number, adhanFile: string = DEFAULT_ADHAN_FILE): Promise<void> {
   stopSound();
   if (mode === "silent") return;
   const gain = Math.max(0, Math.min(1, volume / 100));
-  if (mode === "adhan" && (await adhanAvailable())) {
-    playFile(gain);
+  if (mode === "adhan" && (await adhanAvailable(adhanFile))) {
+    playFile(adhanUrl(adhanFile), gain);
   } else {
     playChime(gain);
   }
 }
 
-function playFile(gain: number) {
-  const audio = new Audio(ADHAN_URL);
+function playFile(url: string, gain: number) {
+  const audio = new Audio(url);
   audio.volume = gain;
   const finish = () => {
     if (stopCurrent === stop) stopCurrent = null;

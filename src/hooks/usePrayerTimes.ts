@@ -29,7 +29,7 @@ export type PrayerState =
       status: "ok";
       now: number;
       /** Today's six times, or tomorrow's once today's Isha has passed (as mosque boards do). */
-      row: Record<PrayerKey, Date>;
+      row: Record<PrayerKey, Date | null>;
       prev: PrayerInstant;
       next: PrayerInstant;
       remainingMs: number;
@@ -57,23 +57,38 @@ export function usePrayerTimes(): PrayerState {
 
   if (!line) return { status: "error", now };
 
-  const nextIndex = line.findIndex((p) => p.at.getTime() > now);
-  // The timeline spans yesterday's Isha to tomorrow's Isha, so both neighbours exist.
-  const next = line[nextIndex];
-  const prev = line[nextIndex - 1];
-  const span = next.at.getTime() - prev.at.getTime();
+  // Polar days can leave individual times null; walk past them to find the
+  // next real instant, and keep the row showing the day's six slots as they are.
+  const nextIndex = line.findIndex((p) => p.at !== null && p.at.getTime() > now);
+  if (nextIndex === -1) return { status: "error", now };
+  const next = line[nextIndex]!;
+  let prev: PrayerInstant | null = null;
+  for (let i = nextIndex - 1; i >= 0; i--) {
+    if (line[i]?.at) {
+      prev = line[i]!;
+      break;
+    }
+  }
+  const nextAt = next.at!.getTime();
   // line[1..6] is today, line[7..12] tomorrow; line[6] is today's Isha.
-  const rowStart = now >= line[6].at.getTime() ? 7 : 1;
-  const row = Object.fromEntries(PRAYER_KEYS.map((key, i) => [key, line[rowStart + i].at])) as Record<PrayerKey, Date>;
+  const todayIsha = line[6].at;
+  const rowStart = todayIsha && now >= todayIsha.getTime() ? 7 : 1;
+  const row = Object.fromEntries(PRAYER_KEYS.map((key, i) => [key, line[rowStart + i]?.at ?? null])) as Record<
+    PrayerKey,
+    Date | null
+  >;
+
+  const prevAt = prev?.at?.getTime() ?? nextAt;
+  const span = nextAt - prevAt;
 
   return {
     status: "ok",
     now,
     row,
-    prev,
+    prev: prev ?? next,
     next,
-    remainingMs: next.at.getTime() - now,
-    progress: span > 0 ? Math.min(1, Math.max(0, (now - prev.at.getTime()) / span)) : 0,
-    period: periodOf(prev.key),
+    remainingMs: nextAt - now,
+    progress: span > 0 ? Math.min(1, Math.max(0, (now - prevAt) / span)) : 0,
+    period: periodOf(prev?.key ?? next.key),
   };
 }

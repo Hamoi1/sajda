@@ -6,8 +6,15 @@ import { SETTINGS_EVENT, SETTINGS_STORAGE_KEY, useSettingsStore } from "../store
 /** Keeps this window's store in step with the other window, and applies language and theme. */
 export function useWindowSync(label: WindowLabel): void {
   useEffect(() => {
-    const rehydrate = () => void useSettingsStore.persist.rehydrate();
-    const offSettings = onEvent(SETTINGS_EVENT, rehydrate);
+    // A settings write announces itself with the writing window's label. Rehydrating
+    // our own write replaces the store mid-edit and could blank the open dialog,
+    // so only foreign announcements are applied. The `storage` event already only
+    // fires in *other* windows, so it needs no filtering.
+    const rehydrate = (from?: unknown) => {
+      if (from === label) return;
+      void useSettingsStore.persist.rehydrate();
+    };
+    const offSettings = onEvent<{ from?: string }>(SETTINGS_EVENT, (payload) => rehydrate(payload?.from));
     // Backup path: both webviews share one origin, so localStorage writes fire `storage` here too.
     const onStorage = (e: StorageEvent) => {
       if (e.key === SETTINGS_STORAGE_KEY) rehydrate();

@@ -1,16 +1,21 @@
 name: Release
 
 # Push a tag that matches the version in src-tauri/tauri.conf.json, e.g.:
-#   git tag v1.0.0
-#   git push origin v1.0.0
+#   git tag v2.0.0
+#   git push origin v2.0.0
 # Installers are attached to a draft release; review it, then publish.
 on:
   push:
     tags: ["v*"]
   workflow_dispatch:
 
+# Only the release needs write access; nothing else runs here.
 permissions:
   contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -31,8 +36,12 @@ jobs:
             args: --target x86_64-apple-darwin
             rust-target: x86_64-apple-darwin
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
     steps:
+      # Pinned by tag; supply chain is dependabot-monitored.
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v7
         with:
           node-version: 22

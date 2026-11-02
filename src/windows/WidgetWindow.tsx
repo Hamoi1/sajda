@@ -1,11 +1,9 @@
-import { availableMonitors, currentMonitor, getCurrentWindow, PhysicalPosition } from "@tauri-apps/api/window";
+import { availableMonitors, currentMonitor, getCurrentWindow, LogicalPosition, LogicalSize, PhysicalPosition } from "@tauri-apps/api/window";
 import { useEffect, useState, type MouseEvent } from "react";
-import { IconLock, IconStop, IconUnlock } from "../components/Icons";
-import { KilimBand } from "../components/KilimBand";
-import { usePrayerTimes } from "../hooks/usePrayerTimes";
+import { WidgetCard } from "../components/widget/WidgetCard";
 import { useWindowSync } from "../hooks/useWindowSync";
-import { dirOf, formatClock, formatCountdown, placeName, prayerName, t } from "../lib/i18n";
 import { emitEvent, inTauri, onEvent } from "../lib/tauri";
+import { WIDGET_SIZES } from "../lib/widgetThemes";
 import { useSettingsStore } from "../store/useSettingsStore";
 
 const POSITION_KEY = "sajda-widget-pos";
@@ -13,10 +11,6 @@ const POSITION_KEY = "sajda-widget-pos";
 export function WidgetWindow() {
   useWindowSync("widget");
   useWidgetFrame();
-  const state = usePrayerTimes();
-  const lang = useSettingsStore((s) => s.lang);
-  const place = useSettingsStore((s) => s.place);
-  const clock = useSettingsStore((s) => s.clock);
   const widget = useSettingsStore((s) => s.widget);
   const updateWidget = useSettingsStore((s) => s.updateWidget);
   const [playing, setPlaying] = useState(false);
@@ -30,74 +24,28 @@ export function WidgetWindow() {
     void getCurrentWindow().startDragging();
   };
 
-  const lockLabel = widget.locked ? t(lang, "unlockPosition") : t(lang, "lockPosition");
-
   return (
-    <div className="h-full p-1.5">
-      <div
-        onMouseDown={startDrag}
-        style={{ backgroundColor: `rgb(var(--wool-rgb) / ${widget.opacity / 100})` }}
-        className={`group flex h-full flex-col overflow-hidden rounded-md border border-line text-ink [text-shadow:0_0_3px_rgb(var(--wool-rgb))] ${
-          widget.locked ? "" : "cursor-grab active:cursor-grabbing"
-        }`}
-      >
-        <div className="flex items-center justify-between px-3 pt-1.5">
-          <span className="truncate text-xs text-ink-soft">{placeName(lang, place)}</span>
-          <div className="flex opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
-            {playing && (
-              <button
-                type="button"
-                onClick={() => void emitEvent("stop-sound")}
-                aria-label={t(lang, "stop")}
-                title={t(lang, "stop")}
-                className="grid h-6 w-7 place-items-center rounded hover:bg-wool-2"
-              >
-                <IconStop width={14} height={14} />
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => updateWidget({ locked: !widget.locked })}
-              aria-label={lockLabel}
-              aria-pressed={widget.locked}
-              title={lockLabel}
-              className="grid h-6 w-7 place-items-center rounded hover:bg-wool-2"
-            >
-              {widget.locked ? <IconLock width={14} height={14} /> : <IconUnlock width={14} height={14} />}
-            </button>
-          </div>
-        </div>
-
-        {state.status === "error" ? (
-          <p role="alert" className="flex-1 px-3 text-xs leading-snug">
-            {t(lang, "calcError")}
-          </p>
-        ) : (
-          <>
-            <div className="flex flex-1 items-center justify-between gap-2 px-3">
-              <span className="text-sm">
-                <span className="font-semibold">{prayerName(lang, state.next.key)}</span>
-                <span className="text-ink-soft"> · </span>
-                <span className="tabular" dir="ltr">
-                  {formatClock(state.next.at, place.tz, clock)}
-                </span>
-              </span>
-              <span role="timer" dir="ltr" className="tabular text-[26px] leading-none font-extrabold text-indigo">
-                {formatCountdown(state.remainingMs)}
-              </span>
-            </div>
-            <KilimBand progress={state.progress} height={12} rtl={dirOf(lang) === "rtl"} />
-          </>
-        )}
+    <div className="h-full p-1.5" onMouseDown={startDrag}>
+      <div className={widget.locked ? "h-full" : "h-full cursor-grab active:cursor-grabbing"}>
+        <WidgetCard
+          size={widget.size}
+          theme={widget.theme}
+          opacity={widget.opacity}
+          locked={widget.locked}
+          playing={playing}
+          onToggleLock={() => updateWidget({ locked: !widget.locked })}
+          onStopSound={() => void emitEvent("stop-sound")}
+        />
       </div>
     </div>
   );
 }
 
-/** Applies visibility, always-on-top and a remembered screen position to the widget's native window. */
+/** Applies visibility, always-on-top, a remembered screen position, and resizes with the size preset. */
 function useWidgetFrame() {
   const visible = useSettingsStore((s) => s.widget.visible);
   const alwaysOnTop = useSettingsStore((s) => s.widget.alwaysOnTop);
+  const size = useSettingsStore((s) => s.widget.size);
 
   useEffect(() => {
     if (!inTauri) return;
@@ -112,6 +60,21 @@ function useWidgetFrame() {
       .catch((err) => console.error("always-on-top failed", err));
   }, [alwaysOnTop]);
 
+  // Theme and size live in the same prefs object; only a size change resizes the native window.
+  useEffect(() => {
+    if (!inTauri) return;
+    const win = getCurrentWindow();
+    const { width, height } = WIDGET_SIZES[size];
+    void (async () => {
+      try {
+        await win.setSize(new LogicalSize(width, height));
+        await clampIntoMonitors(win);
+      } catch (err) {
+        console.error("widget resize failed", err);
+      }
+    })();
+  }, [size]);
+
   useEffect(() => {
     if (!inTauri) return;
     const win = getCurrentWindow();
@@ -125,6 +88,39 @@ function useWidgetFrame() {
     });
     return () => void unlisten.then((fn) => fn());
   }, []);
+}
+
+/** Keeps the top-left corner but pulls the window back inside the nearest monitor after a resize. */
+async function clampIntoMonitors(win: ReturnType<typeof getCurrentWindow>) {
+  const monitors = await availableMonitors();
+  if (monitors.length === 0) return;
+  const pos = await win.outerPosition();
+  const scale = await win.scaleFactor();
+  const size = await win.outerSize();
+  const w = Math.round(size.width / scale);
+  const h = Math.round(size.height / scale);
+  const logical = { x: pos.x / scale, y: pos.y / scale };
+
+  let best = monitors[0];
+  let bestDist = Number.POSITIVE_INFINITY;
+  for (const m of monitors) {
+    const cx = m.position.x / m.scaleFactor + m.size.width / m.scaleFactor / 2;
+    const cy = m.position.y / m.scaleFactor + m.size.height / m.scaleFactor / 2;
+    const d = (cx - logical.x) ** 2 + (cy - logical.y) ** 2;
+    if (d < bestDist) {
+      bestDist = d;
+      best = m;
+    }
+  }
+  const mx = best.position.x / best.scaleFactor;
+  const my = best.position.y / best.scaleFactor;
+  const mw = best.size.width / best.scaleFactor;
+  const mh = best.size.height / best.scaleFactor;
+  const x = Math.min(Math.max(logical.x, mx), Math.max(mx, mx + mw - w));
+  const y = Math.min(Math.max(logical.y, my), Math.max(my, my + mh - h));
+  if (x !== logical.x || y !== logical.y) {
+    await win.setPosition(new LogicalPosition(x, y));
+  }
 }
 
 async function placeWidget() {

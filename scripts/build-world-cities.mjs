@@ -15,9 +15,13 @@ for (const c of cityMapping) {
 }
 
 // Compact tuples keep the bundle small: [name, province, country, lat, lng, tz].
-// Sorted by population so the largest match is listed first.
+// Sorted by population so the largest match is listed first. Capped to the
+// WORLD_CITY_LIMIT largest entries — the long tail of tiny towns costs ~300 KB
+// of bundle for matches that hand-entered Kurdistan/Iraq cities already cover.
+const WORLD_CITY_LIMIT = 4000;
 const rows = [...best.values()]
   .sort((a, b) => (b.pop ?? 0) - (a.pop ?? 0))
+  .slice(0, WORLD_CITY_LIMIT)
   .map((c) => [
     c.city,
     c.province && c.province !== c.city ? c.province : "",

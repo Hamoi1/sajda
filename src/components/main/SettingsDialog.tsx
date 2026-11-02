@@ -1,7 +1,7 @@
 import { disable as disableAutostart, enable as enableAutostart, isEnabled as autostartEnabled } from "@tauri-apps/plugin-autostart";
-import { useEffect, useId, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { adhanAvailable, onPlayingChange, playSound, stopSound } from "../../lib/audio";
-import { METHOD_LABELS, placeName, prayerName, regionName, t } from "../../lib/i18n";
+import { useEffect, useId, useMemo, useRef, useState, type ComponentType, type FormEvent, type ReactNode, type SVGProps } from "react";
+import { ADHAN_VOICES, adhanAvailable, onPlayingChange, playSound, stopSound } from "../../lib/audio";
+import { METHOD_LABELS, placeName, prayerName, regionName, t, type StringKey } from "../../lib/i18n";
 import {
   allTimeZones,
   cityToPlace,
@@ -14,18 +14,40 @@ import {
   type WorldCity,
 } from "../../lib/location";
 import { inTauri } from "../../lib/tauri";
-import { METHOD_KEYS, PRAYER_KEYS, type Lang, type MethodKey } from "../../lib/types";
+import {
+  METHOD_KEYS,
+  PRAYER_KEYS,
+  WIDGET_SIZE_KEYS,
+  WIDGET_THEME_KEYS,
+  type Lang,
+  type MethodKey,
+  type WidgetSize,
+  type WidgetTheme,
+} from "../../lib/types";
+import { WIDGET_SIZES } from "../../lib/widgetThemes";
 import { useSettingsStore } from "../../store/useSettingsStore";
-import { IconCheck, IconClose, IconPlay, IconSearch, IconStop } from "../Icons";
+import { IconBook, IconCheck, IconClose, IconCog, IconPlace, IconPlay, IconSearch, IconStop, IconVolume, IconWidget } from "../Icons";
+import { WidgetCard } from "../widget/WidgetCard";
 
 interface SettingsDialogProps {
   open: boolean;
   onClose: () => void;
 }
 
+type SettingsPage = "times" | "sound" | "widget" | "reader" | "general";
+
+const PAGES: { id: SettingsPage; labelKey: StringKey; hintKey?: StringKey; icon: ComponentType<SVGProps<SVGSVGElement>> }[] = [
+  { id: "times", labelKey: "settingsTimes", hintKey: "settingsTimesHint", icon: IconPlace },
+  { id: "sound", labelKey: "sound", hintKey: "soundHint", icon: IconVolume },
+  { id: "widget", labelKey: "widget", hintKey: "widgetHint", icon: IconWidget },
+  { id: "reader", labelKey: "quranLock", hintKey: "quranLockHint", icon: IconBook },
+  { id: "general", labelKey: "settingsGeneral", hintKey: "settingsGeneralHint", icon: IconCog },
+];
+
 export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const lang = useSettingsStore((s) => s.lang);
+  const [page, setPage] = useState<SettingsPage>("times");
 
   useEffect(() => {
     const dialog = ref.current;
@@ -39,32 +61,80 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
       ref={ref}
       onClose={onClose}
       aria-labelledby="settings-title"
-      className="m-auto h-[min(560px,92vh)] w-[min(680px,94vw)] overflow-hidden rounded-md border border-line bg-wool p-0 text-ink shadow-2xl"
+      className="m-auto h-[min(640px,92vh)] w-[min(880px,96vw)] overflow-hidden rounded-xl border border-line bg-surface p-0 text-ink shadow-2xl"
     >
-      {/* Only rendered while open, so each opening starts from fresh store values. */}
+      {/* Rendered while open; the page state survives reopening so the user lands where they were. */}
       {open && (
-        <div className="flex h-full flex-col">
-          <div className="flex items-center border-b border-line ps-5">
-            <h2 id="settings-title" className="flex-1 text-lg font-bold">
+        <div className="flex h-full flex-col md:flex-row">
+          <nav className="flex shrink-0 gap-1 border-b border-line bg-veil p-2 md:w-[220px] md:flex-col md:border-b-0 md:border-e md:p-3" aria-label={t(lang, "settings")}>
+            <h2 id="settings-title" className="hidden px-3 pb-2 pt-1 text-[1.15rem] font-bold text-accent md:block">
               {t(lang, "settings")}
             </h2>
+            {PAGES.map(({ id, labelKey, icon: Icon }) => (
+              <button
+                key={id}
+                type="button"
+                aria-current={page === id ? "page" : undefined}
+                onClick={() => setPage(id)}
+                className={`mx-1 flex items-center gap-3 rounded-[10px] px-4 py-[9px] text-start text-sm transition-all ${
+                  page === id ? "font-bold text-on-gold" : "text-ink-soft hover:bg-tile hover:text-ink"
+                }`}
+                style={
+                  page === id
+                    ? { background: "var(--accent-gradient)", boxShadow: "var(--accent-glow)" }
+                    : undefined
+                }
+              >
+                <Icon width={16} height={16} className={page === id ? "" : "opacity-80"} />
+                {t(lang, labelKey)}
+              </button>
+            ))}
+          </nav>
+
+          <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
+            <div className="flex items-center justify-between border-b border-line px-5 py-2.5 md:hidden">
+              <h2 className="text-lg font-bold">{t(lang, "settings")}</h2>
+              <button type="button" onClick={onClose} aria-label={t(lang, "close")} className="grid h-9 w-9 place-items-center rounded hover:bg-surface-2">
+                <IconClose />
+              </button>
+            </div>
             <button
               type="button"
               onClick={onClose}
               aria-label={t(lang, "close")}
-              title={t(lang, "close")}
-              className="grid h-11 w-11 place-items-center hover:bg-wool-2"
+              className="absolute end-2 top-2 z-10 hidden h-9 w-9 place-items-center rounded-lg hover:bg-surface-2 md:grid"
             >
               <IconClose />
             </button>
-          </div>
-          <div className="flex-1 overflow-y-auto px-5 pb-6 select-text">
-            <LocationSection />
-            <CalculationSection />
-            <SoundSection />
-            <DisplaySection />
-            <WidgetSection />
-            <SystemSection />
+            <div key={page} className="view-enter min-h-0 flex-1 overflow-y-auto px-6 pb-6 pt-5 select-text">
+              {page === "times" && (
+                <Page title={t(lang, "settingsTimes")} hint={t(lang, "settingsTimesHint")}>
+                  <LocationSection />
+                  <CalculationSection />
+                </Page>
+              )}
+              {page === "sound" && (
+                <Page title={t(lang, "sound")} hint={t(lang, "soundHint")}>
+                  <SoundSection />
+                </Page>
+              )}
+              {page === "widget" && (
+                <Page title={t(lang, "widget")} hint={t(lang, "widgetHint")}>
+                  <WidgetSection />
+                </Page>
+              )}
+              {page === "reader" && (
+                <Page title={t(lang, "quranLock")} hint={t(lang, "quranLockHint")}>
+                  <ReaderSection />
+                </Page>
+              )}
+              {page === "general" && (
+                <Page title={t(lang, "settingsGeneral")} hint={t(lang, "settingsGeneralHint")}>
+                  <DisplaySection />
+                  <SystemSection />
+                </Page>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -72,18 +142,31 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
   );
 }
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
+function Page({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
   return (
-    <section className="border-b border-line py-5 last:border-b-0">
-      <h3 className="mb-3 text-base font-bold text-madder">{title}</h3>
-      <div className="flex flex-col gap-3">{children}</div>
+    <section className="flex flex-col gap-3.5">
+      <div>
+        <h3 className="text-lg font-bold text-accent">{title}</h3>
+        {hint && <p className="mt-0.5 text-xs text-ink-soft">{hint}</p>}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+/** A titled sub-block inside a page. */
+function Group({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="flex flex-col gap-3 border-t border-line pt-4 first:border-t-0 first:pt-0">
+      <h4 className="text-sm font-bold text-ink-soft">{title}</h4>
+      {children}
     </section>
   );
 }
 
 function Field({ label, htmlFor, children }: { label: string; htmlFor?: string; children: ReactNode }) {
   return (
-    <div className="grid items-center gap-x-4 gap-y-1 min-[560px]:grid-cols-[200px_1fr]">
+    <div className="grid items-center gap-x-4 gap-y-1 min-[620px]:grid-cols-[200px_1fr]">
       <label htmlFor={htmlFor} className="text-sm text-ink-soft">
         {label}
       </label>
@@ -104,13 +187,14 @@ function Choice<T extends string>({
   onChange: (value: T) => void;
 }) {
   return (
-    <div role="radiogroup" className="inline-flex flex-wrap overflow-hidden rounded border border-line">
+    <div role="radiogroup" className="inline-flex max-w-full flex-wrap gap-[3px] rounded-[10px] border border-line bg-tile p-[3px]">
       {options.map((opt) => (
         <label
           key={opt.value}
-          className={`cursor-pointer px-3 py-1.5 text-sm not-last:border-e not-last:border-line has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-indigo ${
-            value === opt.value ? "bg-indigo text-wool" : "hover:bg-wool-2"
+          className={`cursor-pointer rounded-lg px-3.5 py-1.5 text-sm transition-all has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-gold ${
+            value === opt.value ? "font-bold text-on-gold" : "hover:text-ink"
           }`}
+          style={value === opt.value ? { background: "var(--accent-gradient)" } : undefined}
         >
           <input
             type="radio"
@@ -127,6 +211,31 @@ function Choice<T extends string>({
   );
 }
 
+/** A switch row: label on one side, iOS-style gold switch on the other. */
+function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className="flex items-center justify-between gap-4 rounded-xl border border-line bg-tile px-4 py-3 text-start text-sm transition-colors hover:border-gold/50"
+    >
+      <span>{label}</span>
+      <span
+        className={`relative h-6 w-[46px] shrink-0 rounded-full transition-colors duration-200 ${checked ? "" : "bg-line"}`}
+        style={checked ? { background: "var(--accent-gradient)", boxShadow: "var(--accent-glow)" } : undefined}
+      >
+        <span
+          className={`absolute top-[3px] h-[18px] w-[18px] rounded-full bg-surface shadow transition-[inset-inline-start] duration-200 ${
+            checked ? "start-[25px]" : "start-[3px]"
+          }`}
+        />
+      </span>
+    </button>
+  );
+}
+
 const REGIONS: Region[] = ["kurdistan", "iraq", "world"];
 
 function LocationSection() {
@@ -140,7 +249,7 @@ function LocationSection() {
   const nothing = results.length === 0 && world.status === "done" && world.cities.length === 0;
 
   return (
-    <Section title={t(lang, "location")}>
+    <Group title={t(lang, "location")}>
       <div className="relative">
         <label htmlFor={searchId} className="sr-only">
           {t(lang, "searchCity")}
@@ -157,7 +266,7 @@ function LocationSection() {
           className="w-full ps-9"
         />
       </div>
-      <div className="max-h-52 overflow-y-auto rounded border border-line">
+      <div className="max-h-52 overflow-y-auto rounded-md border border-line">
         {nothing ? (
           <p className="p-3 text-sm text-ink-soft">{t(lang, "noCity", { q: query })}</p>
         ) : (
@@ -166,7 +275,7 @@ function LocationSection() {
             if (cities.length === 0) return null;
             return (
               <div key={region}>
-                <p className="sticky top-0 bg-wool-2 px-3 py-1 text-xs font-semibold text-ink-soft">
+                <p className="sticky top-0 bg-surface-2 px-3 py-1 text-xs font-semibold text-ink-soft">
                   {regionName(lang, region)}
                 </p>
                 <ul>
@@ -178,8 +287,8 @@ function LocationSection() {
                           type="button"
                           aria-pressed={selected}
                           onClick={() => update({ place: cityToPlace(city) })}
-                          className={`flex w-full items-center justify-between px-3 py-2 text-start text-sm hover:bg-wool-2 ${
-                            selected ? "font-bold text-madder" : ""
+                          className={`flex w-full items-center justify-between px-3 py-2 text-start text-sm hover:bg-surface-2 ${
+                            selected ? "font-bold text-accent" : ""
                           }`}
                         >
                           <span>{lang === "en" ? city.en : `${city[lang]} · ${city.en}`}</span>
@@ -199,13 +308,13 @@ function LocationSection() {
           </p>
         )}
         {world.status === "error" && (
-          <p role="alert" className="px-3 py-2 text-xs text-madder">
+          <p role="alert" className="px-3 py-2 text-xs text-accent">
             {t(lang, "worldError")}
           </p>
         )}
         {world.cities.length > 0 && (
           <div>
-            <p className="sticky top-0 bg-wool-2 px-3 py-1 text-xs font-semibold text-ink-soft">{t(lang, "moreCities")}</p>
+            <p className="sticky top-0 bg-surface-2 px-3 py-1 text-xs font-semibold text-ink-soft">{t(lang, "moreCities")}</p>
             <ul>
               {world.cities.map((city) => {
                 const next = worldCityToPlace(city);
@@ -216,8 +325,8 @@ function LocationSection() {
                       type="button"
                       aria-pressed={selected}
                       onClick={() => update({ place: next })}
-                      className={`flex w-full items-center justify-between px-3 py-2 text-start text-sm hover:bg-wool-2 ${
-                        selected ? "font-bold text-madder" : ""
+                      className={`flex w-full items-center justify-between px-3 py-2 text-start text-sm hover:bg-surface-2 ${
+                        selected ? "font-bold text-accent" : ""
                       }`}
                     >
                       <span dir="ltr">
@@ -236,7 +345,7 @@ function LocationSection() {
         )}
       </div>
       <CustomPlaceForm lang={lang} />
-    </Section>
+    </Group>
   );
 }
 
@@ -293,7 +402,7 @@ function CustomPlaceForm({ lang }: { lang: Lang }) {
   };
 
   return (
-    <details open={isCustom} className="rounded border border-line">
+    <details open={isCustom} className="rounded-md border border-line">
       <summary className="cursor-pointer px-3 py-2 text-sm font-semibold">
         {t(lang, "customPlace")}
         {isCustom && <span className="ms-2 font-normal text-ink-soft">· {placeName(lang, place)}</span>}
@@ -340,12 +449,12 @@ function CustomPlaceForm({ lang }: { lang: Lang }) {
           </select>
         </Field>
         {error && (
-          <p id={ids.err} role="alert" className="text-sm font-semibold text-madder">
+          <p id={ids.err} role="alert" className="text-sm font-semibold text-accent">
             {error}
           </p>
         )}
         <div>
-          <button type="submit" className="rounded bg-indigo px-4 py-2 text-sm font-semibold text-wool hover:opacity-90">
+          <button type="submit" className="rounded-md bg-indigo px-4 py-2 text-sm font-semibold text-on-indigo hover:opacity-90">
             {t(lang, "useCustom")}
           </button>
         </div>
@@ -364,7 +473,7 @@ function CalculationSection() {
   const methodId = useId();
 
   return (
-    <Section title={t(lang, "calculation")}>
+    <Group title={t(lang, "calculation")}>
       <Field label={t(lang, "method")} htmlFor={methodId}>
         <select
           id={methodId}
@@ -398,7 +507,7 @@ function CalculationSection() {
             const name = prayerName(lang, key);
             const value = offsets[key];
             return (
-              <div key={key} className="flex items-center justify-between rounded border border-line px-2 py-1">
+              <div key={key} className="flex items-center justify-between rounded-md border border-line px-2 py-1">
                 <span className="text-sm">{name}</span>
                 <div className="flex items-center" dir="ltr">
                   <button
@@ -406,7 +515,7 @@ function CalculationSection() {
                     onClick={() => setOffset(key, value - 1)}
                     disabled={value <= -30}
                     aria-label={`${name} −1 ${t(lang, "minutesShort")}`}
-                    className="grid h-9 w-9 place-items-center rounded hover:bg-wool-2 disabled:opacity-40"
+                    className="grid h-9 w-9 place-items-center rounded hover:bg-surface-2 disabled:opacity-40"
                   >
                     −
                   </button>
@@ -418,7 +527,7 @@ function CalculationSection() {
                     onClick={() => setOffset(key, value + 1)}
                     disabled={value >= 30}
                     aria-label={`${name} +1 ${t(lang, "minutesShort")}`}
-                    className="grid h-9 w-9 place-items-center rounded hover:bg-wool-2 disabled:opacity-40"
+                    className="grid h-9 w-9 place-items-center rounded hover:bg-surface-2 disabled:opacity-40"
                   >
                     +
                   </button>
@@ -428,7 +537,7 @@ function CalculationSection() {
           })}
         </div>
       </div>
-    </Section>
+    </Group>
   );
 }
 
@@ -436,20 +545,22 @@ function SoundSection() {
   const lang = useSettingsStore((s) => s.lang);
   const sound = useSettingsStore((s) => s.sound);
   const volume = useSettingsStore((s) => s.volume);
+  const adhanFile = useSettingsStore((s) => s.adhanFile);
   const reminderMin = useSettingsStore((s) => s.reminderMin);
   const update = useSettingsStore((s) => s.update);
   const [hasAdhan, setHasAdhan] = useState<boolean | null>(null);
   const [playing, setPlaying] = useState(false);
   const volumeId = useId();
   const reminderId = useId();
+  const voiceId = useId();
 
   useEffect(() => {
-    void adhanAvailable().then(setHasAdhan);
+    void adhanAvailable(adhanFile).then(setHasAdhan);
     return onPlayingChange(setPlaying);
-  }, []);
+  }, [adhanFile]);
 
   return (
-    <Section title={t(lang, "sound")}>
+    <Group title={t(lang, "sound")}>
       <Field label={t(lang, "sound")}>
         <Choice
           name="sound"
@@ -467,6 +578,21 @@ function SoundSection() {
           </p>
         )}
       </Field>
+      {sound !== "silent" && (
+        <Field label={t(lang, "adhanVoice")} htmlFor={voiceId}>
+          <select
+            id={voiceId}
+            value={adhanFile}
+            onChange={(e) => update({ adhanFile: e.target.value })}
+          >
+            {ADHAN_VOICES.map((voice) => (
+              <option key={voice.file} value={voice.file}>
+                {voice.label[lang]}
+              </option>
+            ))}
+          </select>
+        </Field>
+      )}
       <Field label={`${t(lang, "volume")} · ${volume}%`} htmlFor={volumeId}>
         <div className="flex items-center gap-3">
           <input
@@ -480,8 +606,8 @@ function SoundSection() {
           />
           <button
             type="button"
-            onClick={() => (playing ? stopSound() : void playSound(sound === "silent" ? "chime" : sound, volume))}
-            className="flex h-9 items-center gap-1.5 rounded border border-line px-3 text-sm hover:bg-wool-2"
+            onClick={() => (playing ? stopSound() : void playSound(sound === "silent" ? "chime" : sound, volume, adhanFile))}
+            className="flex h-9 items-center gap-1.5 rounded-md border border-line px-3 text-sm hover:bg-surface-2"
           >
             {playing ? <IconStop /> : <IconPlay />}
             {playing ? t(lang, "stop") : t(lang, "test")}
@@ -501,7 +627,7 @@ function SoundSection() {
           ))}
         </select>
       </Field>
-    </Section>
+    </Group>
   );
 }
 
@@ -512,7 +638,7 @@ function DisplaySection() {
   const update = useSettingsStore((s) => s.update);
 
   return (
-    <Section title={t(lang, "display")}>
+    <Group title={t(lang, "display")}>
       <Field label={t(lang, "language")}>
         <Choice
           name="lang"
@@ -548,34 +674,113 @@ function DisplaySection() {
           ]}
         />
       </Field>
-    </Section>
+    </Group>
   );
 }
 
-function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+/** Renders the real widget card at the given size, scaled to fit the preview box. */
+function WidgetPreview({ size, scale }: { size: WidgetSize; scale: number }) {
+  const { width, height } = WIDGET_SIZES[size];
   return (
-    <label className="flex cursor-pointer items-center gap-3 text-sm">
-      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="h-4 w-4" />
-      {label}
-    </label>
+    <div style={{ width: width * scale, height: height * scale }} className="shrink-0">
+      <div style={{ width, height, transform: `scale(${scale})`, transformOrigin: "top left" }}>
+        <LiveWidgetCard size={size} />
+      </div>
+    </div>
   );
 }
+
+function LiveWidgetCard({ size }: { size: WidgetSize }) {
+  const widget = useSettingsStore((s) => s.widget);
+  const updateWidget = useSettingsStore((s) => s.updateWidget);
+  const [playing, setPlaying] = useState(false);
+
+  useEffect(() => onPlayingChange(setPlaying), []);
+
+  return (
+    <WidgetCard
+      size={size}
+      theme={widget.theme}
+      opacity={Math.max(widget.opacity, 70)}
+      locked={widget.locked}
+      playing={playing}
+      onToggleLock={() => updateWidget({ locked: !widget.locked })}
+      onStopSound={() => stopSound()}
+    />
+  );
+}
+
+const THEME_LABEL_KEYS: Record<WidgetTheme, "wThemeIndigoGold" | "wThemeGlass" | "wThemeClassic" | "wThemeKilim" | "wThemeMinimal" | "wThemeMidnight"> = {
+  indigoGold: "wThemeIndigoGold",
+  glass: "wThemeGlass",
+  classic: "wThemeClassic",
+  kilim: "wThemeKilim",
+  minimal: "wThemeMinimal",
+  midnight: "wThemeMidnight",
+};
+
+const SIZE_LABEL_KEYS: Record<WidgetSize, "widgetSizeSmall" | "widgetSizeStandard" | "widgetSizeLarge" | "widgetSizeHuge"> = {
+  small: "widgetSizeSmall",
+  standard: "widgetSizeStandard",
+  large: "widgetSizeLarge",
+  huge: "widgetSizeHuge",
+};
 
 function WidgetSection() {
   const lang = useSettingsStore((s) => s.lang);
   const widget = useSettingsStore((s) => s.widget);
   const updateWidget = useSettingsStore((s) => s.updateWidget);
   const opacityId = useId();
+  const previewScale = widget.size === "huge" ? 0.78 : widget.size === "large" ? 0.92 : 1;
 
   return (
-    <Section title={t(lang, "widget")}>
-      <Toggle label={t(lang, "widgetVisible")} checked={widget.visible} onChange={(visible) => updateWidget({ visible })} />
-      <Toggle
-        label={t(lang, "alwaysOnTop")}
-        checked={widget.alwaysOnTop}
-        onChange={(alwaysOnTop) => updateWidget({ alwaysOnTop })}
-      />
-      <Toggle label={t(lang, "lockPosition")} checked={widget.locked} onChange={(locked) => updateWidget({ locked })} />
+    <Group title={t(lang, "widget")}>
+      <div className="flex justify-center rounded-xl border border-line bg-veil p-4">
+        <WidgetPreview size={widget.size} scale={previewScale} />
+      </div>
+
+      <div>
+        <p className="mb-2 text-sm text-ink-soft">{t(lang, "widgetTheme")}</p>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {WIDGET_THEME_KEYS.map((theme) => {
+            const selected = widget.theme === theme;
+            return (
+              <button
+                key={theme}
+                type="button"
+                aria-pressed={selected}
+                onClick={() => updateWidget({ theme })}
+                className={`rounded-lg p-1.5 text-center transition-shadow ${
+                  selected ? "ring-2 ring-gold" : "ring-1 ring-line hover:ring-ink-soft"
+                }`}
+              >
+                <div className="pointer-events-none h-[52px] w-[132px] overflow-hidden rounded-md mx-auto">
+                  <div className="h-[116px] w-[300px] origin-top-left" style={{ transform: "scale(0.44)" }}>
+                    <WidgetCard size="standard" theme={theme} opacity={100} locked buttons={false} />
+                  </div>
+                </div>
+                <span className={`mt-1 block truncate text-xs ${selected ? "font-bold text-accent" : "text-ink-soft"}`}>
+                  {t(lang, THEME_LABEL_KEYS[theme])}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <Field label={t(lang, "widgetSize")}>
+        <Choice
+          name="widget-size"
+          value={widget.size}
+          onChange={(v) => updateWidget({ size: v })}
+          // \u2066..\u2069 keep the WxH dimensions reading left-to-right inside RTL labels.
+          options={WIDGET_SIZE_KEYS.map((s) => ({
+            value: s,
+            label: `${t(lang, SIZE_LABEL_KEYS[s])} · \u2066${WIDGET_SIZES[s].width}×${WIDGET_SIZES[s].height}\u2069`,
+          }))}
+        />
+      </Field>
+
       <Field label={`${t(lang, "opacity")} · ${widget.opacity}%`} htmlFor={opacityId}>
         <input
           id={opacityId}
@@ -587,12 +792,161 @@ function WidgetSection() {
           className="w-full"
         />
       </Field>
-    </Section>
+
+      <Toggle label={t(lang, "widgetVisible")} checked={widget.visible} onChange={(visible) => updateWidget({ visible })} />
+      <Toggle
+        label={t(lang, "alwaysOnTop")}
+        checked={widget.alwaysOnTop}
+        onChange={(alwaysOnTop) => updateWidget({ alwaysOnTop })}
+      />
+      <Toggle label={t(lang, "lockPosition")} checked={widget.locked} onChange={(locked) => updateWidget({ locked })} />
+    </Group>
+  );
+}
+
+/** "21:00, 05:30" → ["21:00","05:30"]; null when any entry is malformed. */
+function parseTimes(raw: string): string[] | null {
+  const entries = raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => s !== "");
+  const out: string[] = [];
+  for (const entry of entries) {
+    const m = entry.match(/^(\d{1,2}):(\d{2})$/);
+    if (!m) return null;
+    const h = Number(m[1]);
+    const min = Number(m[2]);
+    if (h > 23 || min > 59) return null;
+    out.push(`${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`);
+  }
+  return out;
+}
+
+function ReaderSection() {
+  const lang = useSettingsStore((s) => s.lang);
+  const reader = useSettingsStore((s) => s.reader);
+  const updateReader = useSettingsStore((s) => s.updateReader);
+  const [timesRaw, setTimesRaw] = useState(reader.times.join(", "));
+  const [timesError, setTimesError] = useState(false);
+  const [poolRaw, setPoolRaw] = useState(reader.pool.join(", "));
+  const [poolError, setPoolError] = useState(false);
+
+  const onTimes = (raw: string) => {
+    setTimesRaw(raw);
+    if (raw.trim() === "") {
+      setTimesError(false);
+      updateReader({ times: [] });
+      return;
+    }
+    const parsed = parseTimes(raw);
+    setTimesError(parsed === null);
+    if (parsed) updateReader({ times: parsed });
+  };
+
+  const onPool = (raw: string) => {
+    setPoolRaw(raw);
+    const nums = raw
+      .split(",")
+      .map((s) => Number(s.trim()))
+      .filter((n) => Number.isInteger(n) && n >= 1 && n <= 114);
+    const malformed = raw.trim() !== "" && raw.split(",").some((s) => s.trim() !== "" && !(Number.isInteger(Number(s.trim())) && Number(s.trim()) >= 1 && Number(s.trim()) <= 114));
+    setPoolError(malformed);
+    updateReader({ pool: nums });
+  };
+
+  const surahId = useId();
+  const adhanId = useId();
+
+  return (
+    <Group title={t(lang, "quranLock")}>
+      <Toggle label={t(lang, "quranLockEnable")} checked={reader.enabled} onChange={(enabled) => updateReader({ enabled })} />
+
+      <Field label={t(lang, "quranLockAfterAdhan")} htmlFor={adhanId}>
+        <select
+          id={adhanId}
+          value={reader.afterAdhanMin}
+          onChange={(e) => updateReader({ afterAdhanMin: Number(e.target.value) })}
+        >
+          {[0, 5, 10, 15, 20, 30].map((n) => (
+            <option key={n} value={n}>
+              {n === 0 ? t(lang, "quranLockAfterAdhanOff") : t(lang, "reminderN", { n })}
+            </option>
+          ))}
+        </select>
+      </Field>
+
+      <Field label={t(lang, "quranLockTimes")}>
+        <div>
+          <input
+            type="text"
+            dir="ltr"
+            value={timesRaw}
+            onChange={(e) => onTimes(e.target.value)}
+            placeholder="21:00, 05:30"
+            aria-invalid={timesError}
+            className="w-full max-w-xs"
+          />
+          <p className="mt-1 text-xs text-ink-soft">{t(lang, "quranLockTimesHint")}</p>
+          {timesError && (
+            <p role="alert" className="mt-1 text-xs font-semibold text-accent">
+              {t(lang, "quranLockTimesInvalid")}
+            </p>
+          )}
+        </div>
+      </Field>
+
+      <Field label={t(lang, "quranLockMode")}>
+        <Choice
+          name="reader-mode"
+          value={reader.mode}
+          onChange={(v) => updateReader({ mode: v })}
+          options={[
+            { value: "random", label: t(lang, "quranLockRandom") },
+            { value: "fixed", label: t(lang, "quranLockFixed") },
+          ]}
+        />
+      </Field>
+
+      {reader.mode === "fixed" ? (
+        <Field label={t(lang, "quranLockSurahN")} htmlFor={surahId}>
+          <input
+            id={surahId}
+            type="number"
+            dir="ltr"
+            min={1}
+            max={114}
+            value={reader.surah}
+            onChange={(e) => {
+              const n = Number(e.target.value);
+              if (Number.isInteger(n) && n >= 1 && n <= 114) updateReader({ surah: n });
+            }}
+            className="w-24"
+          />
+        </Field>
+      ) : (
+        <Field label={t(lang, "quranLockPool")}>
+          <div>
+            <input
+              type="text"
+              dir="ltr"
+              value={poolRaw}
+              onChange={(e) => onPool(e.target.value)}
+              placeholder="78, 82, 97, 112, 113, 114"
+              aria-invalid={poolError}
+              className="w-full max-w-xs"
+            />
+            <p className="mt-1 text-xs text-ink-soft">{t(lang, "quranLockPoolHint")}</p>
+          </div>
+        </Field>
+      )}
+    </Group>
   );
 }
 
 function SystemSection() {
   const lang = useSettingsStore((s) => s.lang);
+  const updateCheck = useSettingsStore((s) => s.updateCheck);
+  const update = useSettingsStore((s) => s.update);
   const [enabled, setEnabled] = useState<boolean | null>(null);
   const [failed, setFailed] = useState(false);
 
@@ -615,7 +969,7 @@ function SystemSection() {
   };
 
   return (
-    <Section title={t(lang, "system")}>
+    <Group title={t(lang, "system")}>
       {inTauri ? (
         <Toggle label={t(lang, "autostart")} checked={enabled ?? false} onChange={(on) => void change(on)} />
       ) : (
@@ -624,10 +978,13 @@ function SystemSection() {
         </p>
       )}
       {failed && (
-        <p role="alert" className="text-sm font-semibold text-madder">
+        <p role="alert" className="text-sm font-semibold text-accent">
           {t(lang, "autostartFailed")}
         </p>
       )}
-    </Section>
+
+      <Toggle label={t(lang, "updatesEnable")} checked={updateCheck} onChange={(updateCheck) => update({ updateCheck })} />
+      <p className="text-xs text-ink-soft">{t(lang, "updatesHint")}</p>
+    </Group>
   );
 }

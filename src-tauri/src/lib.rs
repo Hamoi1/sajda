@@ -1,3 +1,4 @@
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Condvar, Mutex};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
@@ -13,6 +14,10 @@ const LATE_TOLERANCE_MS: i64 = 120_000;
 /// Upper bound on a single wait, so a wall-clock jump (sleep, timezone change)
 /// is noticed within this window.
 const MAX_WAIT_MS: i64 = 15_000;
+
+/// The Quran reading lock: while false, every close request on the reader
+/// window is refused. The webview flips it once the surah has been read.
+static READER_FINISHED: AtomicBool = AtomicBool::new(false);
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -46,6 +51,12 @@ fn set_schedule(state: tauri::State<'_, Arc<Scheduler>>, events: Vec<ScheduledEv
     let mut guard = state.events.lock().unwrap_or_else(|e| e.into_inner());
     *guard = events;
     state.wake.notify_all();
+}
+
+/// Called by the reader window once the user has read to the end of the surah.
+#[tauri::command]
+fn set_reader_finished(finished: bool) {
+    READER_FINISHED.store(finished, Ordering::SeqCst);
 }
 
 fn fire(app: &AppHandle, event: &ScheduledEvent) {
@@ -109,13 +120,24 @@ fn toggle_widget(app: &AppHandle) {
     }
 }
 
+/// The emergency exit from the Quran reading lock, kept in the tray in case
+/// the reading cannot be finished right now.
+fn close_reader(app: &AppHandle) {
+    if let Some(reader) = app.get_webview_window("reader") {
+        let _ = reader.hide();
+        let _ = reader.set_fullscreen(false);
+        let _ = reader.set_always_on_top(false);
+    }
+}
+
 fn build_tray(app: &tauri::App) -> tauri::Result<()> {
     let open = MenuItem::with_id(app, "open", "Open Sajda", true, None::<&str>)?;
     let widget = MenuItem::with_id(app, "toggle_widget", "Toggle Widget", true, None::<&str>)?;
     let stop = MenuItem::with_id(app, "stop_sound", "Stop Sound", true, None::<&str>)?;
+    let reader_item = MenuItem::with_id(app, "close_reader", "Close Quran Reader", true, None::<&str>)?;
     let separator = PredefinedMenuItem::separator(app)?;
     let quit = MenuItem::with_id(app, "quit", "Quit Sajda", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&open, &widget, &stop, &separator, &quit])?;
+    let menu = Menu::with_items(app, &[&open, &widget, &stop, &reader_item, &separator, &quit])?;
 
     let mut tray = TrayIconBuilder::with_id("sajda-tray")
         .tooltip("Sajda")
@@ -127,6 +149,7 @@ fn build_tray(app: &tauri::App) -> tauri::Result<()> {
             "stop_sound" => {
                 let _ = app.emit_to("main", "stop-sound", ());
             }
+            "close_reader" => close_reader(app),
             "quit" => app.exit(0),
             _ => {}
         })
@@ -162,8 +185,9 @@ pub fn run() {
             Some(vec!["--autostart"]),
         ))
         .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_opener::init())
         .manage(scheduler.clone())
-        .invoke_handler(tauri::generate_handler![set_schedule])
+        .invoke_handler(tauri::generate_handler![set_schedule, set_reader_finished])
         .setup(move |app| {
             build_tray(app)?;
             spawn_scheduler(app.handle().clone(), scheduler.clone());
@@ -176,8 +200,21 @@ pub fn run() {
             Ok(())
         })
         .on_window_event(|window, event| {
-            // Closing hides to the tray; only "Quit Sajda" ends the process.
             if let WindowEvent::CloseRequested { api, .. } = event {
+                // The reading lock: until the surah is finished the reader window
+                // refuses to close (Alt+F4 included). When finished, it hides —
+                // the window is reused for the next reading, never destroyed.
+                if window.label() == "reader" {
+                    api.prevent_close();
+                    if READER_FINISHED.load(Ordering::SeqCst) {
+                        READER_FINISHED.store(false, Ordering::SeqCst);
+                        let _ = window.hide();
+                        let _ = window.set_fullscreen(false);
+                        let _ = window.set_always_on_top(false);
+                    }
+                    return;
+                }
+                // Closing hides to the tray; only "Quit Sajda" ends the process.
                 api.prevent_close();
                 let _ = window.hide();
                 if window.label() == "widget" {
