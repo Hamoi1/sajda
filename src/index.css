@@ -1,0 +1,142 @@
+@import "tailwindcss";
+@import "@fontsource-variable/vazirmatn";
+
+/*
+  Kilim direction (see DESIGN.md): undyed wool, madder red, indigo.
+  Three cores + neutrals; madder is the single accent and marks only the next prayer
+  and the title bar.
+*/
+:root,
+:root[data-theme="light"] {
+  --wool: #f1e9da;
+  --wool-rgb: 241 233 218;
+  --wool-2: #e7dcc6;
+  --line: #d6c7ac;
+  --ink: #2a211b;
+  --ink-soft: #5b4c3f;
+  --madder: #9e2b25;
+  --on-madder: #f8f0e2;
+  --indigo: #23325b;
+  --weave-ground: #23325b;
+  --bg-dawn: #ebe6df;
+  --bg-day: #f1e9da;
+  --bg-dusk: #f3e3d4;
+  --bg-night: #e6dccb;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --wool: #1b1714;
+  --wool-rgb: 27 23 20;
+  --wool-2: #28211c;
+  --line: #43392f;
+  --ink: #f0e7d8;
+  --ink-soft: #c2b29d;
+  --madder: #a83a32;
+  --on-madder: #fff5ea;
+  --indigo: #b4c3ec;
+  /* The dye stays deep in the weave; only text indigo lightens for contrast. */
+  --weave-ground: #2b3a68;
+  --bg-dawn: #1a181a;
+  --bg-day: #1b1714;
+  --bg-dusk: #211814;
+  --bg-night: #141210;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-wool: var(--wool);
+  --color-wool-2: var(--wool-2);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-madder: var(--madder);
+  --color-on-madder: var(--on-madder);
+  --color-indigo: var(--indigo);
+  --font-sans: "Vazirmatn Variable", "Noto Sans Arabic", Tahoma, system-ui, sans-serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--ink);
+  background: var(--wool);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  overflow: hidden;
+}
+
+/* The widget is a transparent, frameless window: nothing may paint behind the card. */
+:root[data-window="widget"],
+:root[data-window="widget"] body,
+:root[data-window="widget"] #root {
+  background: transparent !important;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* The window background shifts with the prayer period: the one ambient cue, kept subtle. */
+.period-dawn { background-color: var(--bg-dawn); }
+.period-day { background-color: var(--bg-day); }
+.period-dusk { background-color: var(--bg-dusk); }
+.period-night { background-color: var(--bg-night); }
+.ambient { transition: background-color 2s ease; }
+
+:focus-visible {
+  outline: 2px solid var(--indigo);
+  outline-offset: 2px;
+}
+.on-madder :focus-visible,
+.on-madder:focus-visible {
+  outline-color: var(--on-madder);
+}
+
+/* In the base layer so Tailwind utilities (e.g. ps-9 on the search box) can override them. */
+@layer base {
+  input,
+  select,
+  button,
+  textarea {
+    font: inherit;
+    color: inherit;
+  }
+
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="range"] {
+    accent-color: var(--madder);
+  }
+
+  input[type="text"],
+  input[type="number"],
+  input[type="search"],
+  select {
+    background: var(--wool);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 6px 8px;
+    user-select: text;
+  }
+
+  dialog::backdrop {
+    background: rgb(20 14 10 / 0.45);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

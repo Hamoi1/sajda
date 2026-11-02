@@ -1,0 +1,64 @@
+name: Release
+
+# Push a tag that matches the version in src-tauri/tauri.conf.json, e.g.:
+#   git tag v1.0.0
+#   git push origin v1.0.0
+# Installers are attached to a draft release; review it, then publish.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build (${{ matrix.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows x64
+            os: windows-latest
+            args: ""
+          - name: macOS Apple Silicon
+            os: macos-latest
+            args: --target aarch64-apple-darwin
+            rust-target: aarch64-apple-darwin
+          - name: macOS Intel
+            os: macos-latest
+            args: --target x86_64-apple-darwin
+            rust-target: x86_64-apple-darwin
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust-target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - run: npm ci
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: Sajda ${{ github.ref_name }}
+          releaseBody: |
+            Download the installer for your system below.
+
+            - Windows: `Sajda_*_x64-setup.exe` or `Sajda_*_x64_en-US.msi`
+            - macOS Apple Silicon (M1 and later): `Sajda_*_aarch64.dmg`
+            - macOS Intel: `Sajda_*_x64.dmg`
+
+            The builds are not code-signed yet. Windows may show a SmartScreen prompt
+            (More info, then Run anyway). On macOS, right-click the app and choose Open the first time.
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}

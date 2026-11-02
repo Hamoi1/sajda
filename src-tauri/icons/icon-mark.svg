@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Small-size variant of icon-source.svg: the mark only, enlarged, because the
+       "Sajda" wordmark is unreadable at 16-32 px (tray icon, taskbar, .ico). -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6F8FC6"/>
+      <stop offset="0.55" stop-color="#4A5A9E"/>
+      <stop offset="1" stop-color="#303A7C"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F4E4C4"/>
+      <stop offset="1" stop-color="#CDA972"/>
+    </linearGradient>
+    <mask id="crescent">
+      <circle cx="500" cy="410" r="230" fill="#fff"/>
+      <circle cx="590" cy="340" r="205" fill="#000"/>
+    </mask>
+  </defs>
+  <rect width="1024" height="1024" rx="232" fill="url(#bg)"/>
+  <g transform="translate(512 520) scale(1.45) translate(-505 -415)">
+    <g fill="url(#gold)">
+      <rect x="270" y="180" width="460" height="460" mask="url(#crescent)"/>
+      <rect x="612" y="262" width="22" height="338"/>
+      <rect x="605" y="330" width="36" height="9"/>
+      <rect x="605" y="452" width="36" height="9"/>
+      <path d="M610 264 L623 222 L636 264 Z"/>
+      <rect x="404" y="432" width="20" height="168"/>
+      <rect x="398" y="480" width="32" height="8"/>
+      <path d="M402 434 L414 402 L426 434 Z"/>
+      <path d="M456 548 C456 494 498 474 520 442 C542 474 584 494 584 548 Z"/>
+      <rect x="440" y="546" width="160" height="56"/>
+    </g>
+    <path d="M506 602 V578 a14 14 0 0 1 28 0 V602 Z" fill="#3D4B8F"/>
+  </g>
+</svg>
