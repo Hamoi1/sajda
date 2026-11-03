@@ -28,9 +28,11 @@
   --deep: #2b3565;
   --deep-2: #34407f;
   --bg-input: #ffffff;
-  --accent-gradient: linear-gradient(135deg, #d4ac50 0%, #b08328 100%);
+  --accent-gradient: var(--gold);
   --accent-muted: rgb(181 137 46 / 0.12);
-  --accent-glow: 0 8px 24px -4px rgb(181 137 46 / 0.22);
+  --accent-glow: none;
+  --raised: #fbf9f4;
+  --raised-2: #efebe1;
   --focus-ring: rgb(181 137 46 / 0.6);
   --shadow-card: 0 4px 16px -2px rgb(15 23 42 / 0.06);
   /* Washes: indigo at low strength, so panels tint instead of turning muddy. */
@@ -45,12 +47,12 @@
 }
 
 :root[data-theme="dark"] {
-  --surface: #0d1322;
+  --surface: #0f1630;
   --surface-rgb: 20 29 49;
-  --surface-2: rgb(38 53 84 / 0.65);
+  --surface-2: #1d2850;
   --line: rgb(255 255 255 / 0.07);
   --line-strong: rgb(255 255 255 / 0.14);
-  --ink: #f8fafc;
+  --ink: #f3f1ea;
   --ink-soft: #94a3b8;
   --ink-muted: #64748b;
   --gold: #dfb85b;
@@ -62,9 +64,11 @@
   --deep: #131a2e;
   --deep-2: #1e2748;
   --bg-input: #0b101d;
-  --accent-gradient: linear-gradient(135deg, #e5c168 0%, #c69b38 100%);
+  --accent-gradient: var(--gold);
   --accent-muted: rgb(223 184 91 / 0.14);
-  --accent-glow: 0 8px 28px -4px rgb(223 184 91 / 0.18);
+  --accent-glow: none;
+  --raised: #161f3d;
+  --raised-2: #1d2850;
   --focus-ring: rgb(223 184 91 / 0.55);
   --shadow-card: 0 4px 20px -2px rgb(0 0 0 / 0.35);
   /* The night sky deepens with the prayer period; the gold stays constant. */
@@ -72,7 +76,7 @@
   --tile: rgb(30 39 72 / 0.45);
   --tile-2: rgb(36 46 88 / 0.6);
   --bg-dawn: #10182c;
-  --bg-day: #0d1322;
+  --bg-day: #0f1630;
   --bg-dusk: #12101f;
   --bg-night: #090d16;
   color-scheme: dark;
@@ -95,6 +99,10 @@
   --color-veil: var(--veil);
   --color-tile: var(--tile);
   --color-tile-2: var(--tile-2);
+  --color-raised: var(--raised);
+  --color-ink-muted: var(--ink-muted);
+  --color-line-strong: var(--line-strong);
+  --color-raised-2: var(--raised-2);
   --font-sans: "Vazirmatn Variable", "Noto Sans Arabic", Tahoma, system-ui, sans-serif;
   --font-quran: "Noto Naskh Arabic", "Vazirmatn Variable", serif;
 }
@@ -320,5 +328,88 @@ input[type="range"]::-moz-range-thumb {
   *::after {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+  }
+}
+
+/* v3 controls: one segmented look, one primary, one ghost. Gold is flat and scarce. */
+@layer components {
+  .seg {
+    display: inline-flex;
+    gap: 2px;
+    padding: 3px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--tile);
+  }
+  .seg-item {
+    padding: 5px 14px;
+    border-radius: 7px;
+    font-size: 0.875rem;
+    color: var(--ink-soft);
+    transition: background-color 150ms ease, color 150ms ease;
+  }
+  .seg-item:hover {
+    color: var(--ink);
+  }
+  .seg-item[aria-selected="true"],
+  .seg-item[aria-pressed="true"],
+  .seg-item[aria-checked="true"] {
+    background: var(--raised-2);
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .pill {
+    padding: 6px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--line-strong);
+    font-size: 0.875rem;
+    color: var(--ink-soft);
+    transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+  }
+  .pill:hover {
+    color: var(--ink);
+  }
+  .pill[aria-pressed="true"] {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--on-gold);
+    font-weight: 700;
+  }
+  .btn-gold {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 0 20px;
+    border-radius: 10px;
+    background: var(--gold);
+    color: var(--on-gold);
+    font-weight: 700;
+    transition: background-color 150ms ease, transform 120ms ease;
+  }
+  .btn-gold:hover {
+    background: var(--gold-bright);
+  }
+  .btn-gold:active {
+    transform: translateY(1px);
+  }
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 36px;
+    padding: 0 16px;
+    border-radius: 10px;
+    border: 1px solid var(--line-strong);
+    color: var(--ink);
+    transition: background-color 150ms ease, border-color 150ms ease;
+  }
+  .btn-ghost:hover {
+    background: var(--tile-2);
+  }
+  .btn-gold:focus-visible {
+    outline-color: var(--ink);
   }
 }

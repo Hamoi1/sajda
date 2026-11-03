@@ -83,6 +83,8 @@ export interface Settings {
   reader: ReaderPrefs;
   /** Notify when a newer GitHub release exists. The only optional network call. */
   updateCheck: boolean;
+  /** First-run setup finished. Installs from before v3 count as done. */
+  onboarded: boolean;
 }
 
 /** Mirrors `ScheduledEvent` in src-tauri/src/lib.rs. */

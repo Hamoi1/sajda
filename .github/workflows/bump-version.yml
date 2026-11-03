@@ -1,0 +1,65 @@
+name: Bump version
+
+# Actions tab -> Bump version -> Run workflow.
+# Sets the version everywhere, commits it to main, tags it, and starts the
+# Release workflow for that tag. Pushes made with GITHUB_TOKEN do not trigger
+# other workflows, so the release is started with an explicit dispatch.
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "patch, minor, major, or an exact version like 2.1.0"
+        required: true
+        default: patch
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: bump-version
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Bump
+        id: bump
+        env:
+          INPUT: ${{ inputs.bump }}
+        run: |
+          version=$(node scripts/bump-version.mjs "$INPUT")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Refuse an existing tag
+        env:
+          VERSION: ${{ steps.bump.outputs.version }}
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" >/dev/null; then
+            echo "::error::v$VERSION already exists"
+            exit 1
+          fi
+
+      - name: Commit and tag
+        env:
+          VERSION: ${{ steps.bump.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock
+          git commit -m "chore: release v$VERSION"
+          git tag "v$VERSION"
+          git push origin HEAD:main "v$VERSION"
+
+      - name: Start the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.bump.outputs.version }}
+        run: gh workflow run release.yml --ref "v$VERSION"

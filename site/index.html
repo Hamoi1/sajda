@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sajda: prayer times for your desktop</title>
+<meta name="description" content="Free, offline prayer times with an always-on-top desktop widget, azkar, tasbih and a Quran reading lock. Kurdish, Arabic and English, for Windows and macOS.">
+<meta property="og:title" content="Sajda: prayer times for your desktop">
+<meta property="og:description" content="Free and offline, in Kurdish, Arabic and English. For Windows and macOS.">
+<meta property="og:image" content="/assets/main.png">
+<meta name="theme-color" content="#0d1322">
+<link rel="icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;800&display=swap">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<a class="skip" href="#main" data-i18n="skip">Skip to content</a>
+
+<header class="nav">
+  <div class="container nav-in">
+    <a class="wordmark" href="/" aria-label="Sajda home">
+      <img src="/assets/icon.png" alt="" width="32" height="32">
+      <span data-i18n="name">Sajda</span>
+    </a>
+    <nav class="nav-links" aria-label="Site">
+      <div class="langs" role="group" aria-label="Language">
+        <button type="button" class="lang" data-lang="en" aria-pressed="true">English</button>
+        <button type="button" class="lang" data-lang="ckb" aria-pressed="false" lang="ckb">کوردی</button>
+        <button type="button" class="lang" data-lang="ar" aria-pressed="false" lang="ar">العربية</button>
+      </div>
+      <a class="nav-link" href="https://github.com/Hamoi1/sajda">GitHub</a>
+      <a class="btn btn-small" href="#download" data-i18n="download">Download</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero container" aria-labelledby="hero-title">
+    <div class="hero-copy">
+      <h1 id="hero-title" class="display" data-i18n="heroTitle">Prayer times that live on your desktop</h1>
+      <p class="lead" data-i18n="heroLead">Free and offline, in Kurdish, Arabic and English.</p>
+      <div class="actions">
+        <a class="btn" id="primary-dl" href="https://github.com/Hamoi1/sajda/releases/latest" data-i18n="dlWindows">Download for Windows</a>
+        <a class="btn btn-ghost" id="secondary-dl" href="#download" data-i18n="dlMac">Download for macOS</a>
+      </div>
+      <p class="fine" id="version-line" data-i18n="versionFallback">Latest release on GitHub</p>
+    </div>
+    <figure class="hero-shot">
+      <img class="shot" src="/assets/main.png" width="1800" height="1240" alt="Sajda's main window: a large gold countdown to Asr, a woven progress band, the date in three calendars and the day's six times on a mosque board">
+      <img class="shot widget-float" src="/assets/widget.png" width="680" height="320" alt="The desktop widget: next prayer, countdown and a slim gold progress line">
+    </figure>
+  </section>
+
+  <section class="band container split" aria-labelledby="widget-title">
+    <div class="copy">
+      <h2 id="widget-title" class="section-title" data-i18n="widgetTitle">A countdown above every window</h2>
+      <p class="body-lg" data-i18n="widgetBody">The widget stays on top while you work. Pick one of six themes and four sizes, drag it anywhere, lock it in place, fade its background.</p>
+    </div>
+    <img class="shot" src="/assets/settings-widget.png" width="1800" height="1240" loading="lazy" alt="Widget settings: a live preview, six theme cards and the size choice">
+  </section>
+
+  <section class="band container" aria-labelledby="practice-title">
+    <h2 id="practice-title" class="section-title narrow" data-i18n="practiceTitle">Azkar and tasbih, counted for you</h2>
+    <div class="pair">
+      <figure>
+        <img class="shot" src="/assets/azkar.png" width="1800" height="1240" loading="lazy" alt="Morning azkar in Arabic naskh with their sources and tap counters">
+        <figcaption data-i18n="azkarCap">Morning, evening and general azkar with their sources. Tap a card to count; progress resets each day.</figcaption>
+      </figure>
+      <figure>
+        <img class="shot" src="/assets/tasbih.png" width="1800" height="1240" loading="lazy" alt="Tasbih: a gold ring fills toward a target of 33">
+        <figcaption data-i18n="tasbihCap">A tasbih that fills toward 33, 99, 100 or 500. Click, or hold the space bar.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="band container accuracy" aria-labelledby="acc-title">
+    <p class="figure num" aria-hidden="true">≈3<span>min</span></p>
+    <div class="copy">
+      <h2 id="acc-title" class="section-title" data-i18n="accTitle">Matches the official Kurdistan timetable</h2>
+      <p class="body-lg" data-i18n="accBody">Checked against a full year of published mosque tables, the average difference is about three minutes. Eleven more methods are built in, from Umm al-Qura to ISNA, and each prayer can be nudged to match your mosque.</p>
+    </div>
+  </section>
+
+  <section class="band container reader" aria-labelledby="reader-title">
+    <img class="shot" src="/assets/reader.png" width="1280" height="800" loading="lazy" alt="The Quran reading lock: a night mushaf page revealing Al-Kawthar ayah by ayah">
+    <div class="copy">
+      <h2 id="reader-title" class="section-title" data-i18n="readerTitle">A surah before you scroll on</h2>
+      <p class="body-lg" data-i18n="readerBody">At the times you choose, a mushaf page opens above everything and reveals the surah ayah by ayah. It closes once the last ayah is read. The whole Quran is bundled, so it works offline.</p>
+    </div>
+  </section>
+
+  <section class="band container download" id="download" aria-labelledby="dl-title">
+    <h2 id="dl-title" class="section-title" data-i18n="dlTitle">Download Sajda</h2>
+    <ul class="dl-list" role="list">
+      <li class="dl-row">
+        <div><p class="dl-os" data-i18n="osWin">Windows 10 and 11</p><p class="dl-file" data-file="exe">Installer (.exe)</p></div>
+        <a class="btn" data-asset="exe" href="https://github.com/Hamoi1/sajda/releases/latest" data-i18n="get">Download</a>
+      </li>
+      <li class="dl-row">
+        <div><p class="dl-os" data-i18n="osMacArm">macOS, Apple Silicon (M1 and later)</p><p class="dl-file" data-file="arm">Disk image (.dmg)</p></div>
+        <a class="btn" data-asset="arm" href="https://github.com/Hamoi1/sajda/releases/latest" data-i18n="get">Download</a>
+      </li>
+      <li class="dl-row">
+        <div><p class="dl-os" data-i18n="osMacIntel">macOS, Intel</p><p class="dl-file" data-file="intel">Disk image (.dmg)</p></div>
+        <a class="btn" data-asset="intel" href="https://github.com/Hamoi1/sajda/releases/latest" data-i18n="get">Download</a>
+      </li>
+    </ul>
+    <p class="fine note" data-i18n="unsigned">The installers are not code-signed yet. On Windows choose More info, then Run anyway. On macOS right-click the app and choose Open the first time.</p>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="container footer-in">
+    <p class="foot-mark" data-i18n="name">Sajda</p>
+    <ul class="foot-links" role="list">
+      <li><a href="https://github.com/Hamoi1/sajda" data-i18n="source">Source code</a></li>
+      <li><a href="https://github.com/Hamoi1/sajda/releases" data-i18n="allReleases">All releases</a></li>
+      <li><a href="https://github.com/Hamoi1/sajda/issues" data-i18n="issue">Report a problem</a></li>
+      <li><a href="https://github.com/Hamoi1/sajda/blob/main/LICENSE" data-i18n="license">MIT license</a></li>
+    </ul>
+  </div>
+</footer>
+<script src="/app.js" defer></script>
+</body>
+</html>

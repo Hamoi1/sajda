@@ -219,8 +219,7 @@ export function ReaderWindow() {
                 <button
                   type="button"
                   onClick={() => void finish()}
-                  className="on-gold flex items-center gap-2.5 rounded-xl px-12 py-3.5 text-lg font-bold text-on-gold transition-[filter] hover:brightness-110"
-                  style={{ background: "var(--accent-gradient)", boxShadow: "var(--accent-glow)" }}
+                  className="on-gold flex items-center gap-2.5 rounded-xl bg-gold px-12 py-3.5 text-lg font-bold text-on-gold transition-colors hover:bg-gold-bright"
                 >
                   <IconCheck />
                   {t(lang, "readerFinish")}
@@ -229,8 +228,7 @@ export function ReaderWindow() {
                 <button
                   type="button"
                   onClick={() => setRevealed((r) => Math.min(r + 1, surah.ayahs.length))}
-                  className="rounded-xl px-12 py-3.5 text-lg font-bold text-on-gold transition-[filter] hover:brightness-110"
-                  style={{ background: "var(--accent-gradient)", boxShadow: "var(--accent-glow)" }}
+                  className="on-gold rounded-xl bg-gold px-12 py-3.5 text-lg font-bold text-on-gold transition-colors hover:bg-gold-bright"
                 >
                   {t(lang, "readerNext")}
                 </button>

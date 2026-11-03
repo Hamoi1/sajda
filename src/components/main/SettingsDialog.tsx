@@ -1,5 +1,5 @@
 import { disable as disableAutostart, enable as enableAutostart, isEnabled as autostartEnabled } from "@tauri-apps/plugin-autostart";
-import { useEffect, useId, useMemo, useRef, useState, type ComponentType, type FormEvent, type ReactNode, type SVGProps } from "react";
+import { useEffect, useId, useMemo, useState, type ComponentType, type FormEvent, type ReactNode, type SVGProps } from "react";
 import { ADHAN_VOICES, adhanAvailable, onPlayingChange, playSound, stopSound } from "../../lib/audio";
 import { METHOD_LABELS, placeName, prayerName, regionName, t, type StringKey } from "../../lib/i18n";
 import {
@@ -26,11 +26,10 @@ import {
 } from "../../lib/types";
 import { WIDGET_SIZES } from "../../lib/widgetThemes";
 import { useSettingsStore } from "../../store/useSettingsStore";
-import { IconBook, IconCheck, IconClose, IconCog, IconPlace, IconPlay, IconSearch, IconStop, IconVolume, IconWidget } from "../Icons";
+import { IconBook, IconCheck, IconCog, IconPlace, IconPlay, IconSearch, IconStop, IconVolume, IconWidget } from "../Icons";
 import { WidgetCard } from "../widget/WidgetCard";
 
 interface SettingsDialogProps {
-  open: boolean;
   onClose: () => void;
 }
 
@@ -44,110 +43,85 @@ const PAGES: { id: SettingsPage; labelKey: StringKey; hintKey?: StringKey; icon:
   { id: "general", labelKey: "settingsGeneral", hintKey: "settingsGeneralHint", icon: IconCog },
 ];
 
-export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
-  const ref = useRef<HTMLDialogElement>(null);
+/** Settings fill the window: section list on the start side, the open section beside it. Esc closes. */
+export function SettingsDialog({ onClose }: SettingsDialogProps) {
   const lang = useSettingsStore((s) => s.lang);
   const [page, setPage] = useState<SettingsPage>("times");
 
   useEffect(() => {
-    const dialog = ref.current;
-    if (!dialog) return;
-    if (open && !dialog.open) dialog.showModal();
-    if (!open && dialog.open) dialog.close();
-  }, [open]);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
 
   return (
-    <dialog
-      ref={ref}
-      onClose={onClose}
-      aria-labelledby="settings-title"
-      className="m-auto h-[min(640px,92vh)] w-[min(880px,96vw)] overflow-hidden rounded-xl border border-line bg-surface p-0 text-ink shadow-2xl"
-    >
-      {/* Rendered while open; the page state survives reopening so the user lands where they were. */}
-      {open && (
-        <div className="flex h-full flex-col md:flex-row">
-          <nav className="flex shrink-0 gap-1 border-b border-line bg-veil p-2 md:w-[220px] md:flex-col md:border-b-0 md:border-e md:p-3" aria-label={t(lang, "settings")}>
-            <h2 id="settings-title" className="hidden px-3 pb-2 pt-1 text-[1.15rem] font-bold text-accent md:block">
-              {t(lang, "settings")}
-            </h2>
-            {PAGES.map(({ id, labelKey, icon: Icon }) => (
-              <button
-                key={id}
-                type="button"
-                aria-current={page === id ? "page" : undefined}
-                onClick={() => setPage(id)}
-                className={`mx-1 flex items-center gap-3 rounded-[10px] px-4 py-[9px] text-start text-sm transition-all ${
-                  page === id ? "font-bold text-on-gold" : "text-ink-soft hover:bg-tile hover:text-ink"
-                }`}
-                style={
-                  page === id
-                    ? { background: "var(--accent-gradient)", boxShadow: "var(--accent-glow)" }
-                    : undefined
-                }
-              >
-                <Icon width={16} height={16} className={page === id ? "" : "opacity-80"} />
-                {t(lang, labelKey)}
-              </button>
-            ))}
-          </nav>
+    <div className="view-enter flex min-h-0 flex-col md:flex-row">
+      <nav
+        className="flex shrink-0 gap-1 overflow-x-auto border-b border-line bg-veil p-2 md:w-[220px] md:flex-col md:border-b-0 md:border-e md:p-3"
+        aria-label={t(lang, "settings")}
+      >
+        {PAGES.map(({ id, labelKey, icon: Icon }) => (
+          <button
+            key={id}
+            type="button"
+            aria-current={page === id ? "page" : undefined}
+            onClick={() => setPage(id)}
+            className={`flex shrink-0 items-center gap-3 rounded-[9px] px-3 py-2.5 text-start text-sm transition-colors ${
+              page === id
+                ? "bg-raised-2 font-semibold text-ink shadow-[inset_3px_0_0_var(--gold)] rtl:shadow-[inset_-3px_0_0_var(--gold)]"
+                : "text-ink-soft hover:bg-tile-2 hover:text-ink"
+            }`}
+          >
+            <Icon width={16} height={16} className={page === id ? "text-accent" : "opacity-80"} />
+            {t(lang, labelKey)}
+          </button>
+        ))}
+        <button type="button" onClick={onClose} className="btn-ghost mt-auto hidden md:inline-flex">
+          {t(lang, "close")}
+        </button>
+      </nav>
 
-          <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
-            <div className="flex items-center justify-between border-b border-line px-5 py-2.5 md:hidden">
-              <h2 className="text-lg font-bold">{t(lang, "settings")}</h2>
-              <button type="button" onClick={onClose} aria-label={t(lang, "close")} className="grid h-9 w-9 place-items-center rounded hover:bg-surface-2">
-                <IconClose />
-              </button>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label={t(lang, "close")}
-              className="absolute end-2 top-2 z-10 hidden h-9 w-9 place-items-center rounded-lg hover:bg-surface-2 md:grid"
-            >
-              <IconClose />
-            </button>
-            <div key={page} className="view-enter min-h-0 flex-1 overflow-y-auto px-6 pb-6 pt-5 select-text">
-              {page === "times" && (
-                <Page title={t(lang, "settingsTimes")} hint={t(lang, "settingsTimesHint")}>
-                  <LocationSection />
-                  <CalculationSection />
-                </Page>
-              )}
-              {page === "sound" && (
-                <Page title={t(lang, "sound")} hint={t(lang, "soundHint")}>
-                  <SoundSection />
-                </Page>
-              )}
-              {page === "widget" && (
-                <Page title={t(lang, "widget")} hint={t(lang, "widgetHint")}>
-                  <WidgetSection />
-                </Page>
-              )}
-              {page === "reader" && (
-                <Page title={t(lang, "quranLock")} hint={t(lang, "quranLockHint")}>
-                  <ReaderSection />
-                </Page>
-              )}
-              {page === "general" && (
-                <Page title={t(lang, "settingsGeneral")} hint={t(lang, "settingsGeneralHint")}>
-                  <DisplaySection />
-                  <SystemSection />
-                </Page>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-    </dialog>
+      <div key={page} className="view-enter min-h-0 min-w-0 flex-1 overflow-y-auto px-8 pb-8 pt-6 select-text">
+        {page === "times" && (
+          <Page title={t(lang, "settingsTimes")} hint={t(lang, "settingsTimesHint")}>
+            <LocationSection />
+            <CalculationSection />
+          </Page>
+        )}
+        {page === "sound" && (
+          <Page title={t(lang, "sound")} hint={t(lang, "soundHint")}>
+            <SoundSection />
+          </Page>
+        )}
+        {page === "widget" && (
+          <Page title={t(lang, "widget")} hint={t(lang, "widgetHint")}>
+            <WidgetSection />
+          </Page>
+        )}
+        {page === "reader" && (
+          <Page title={t(lang, "quranLock")} hint={t(lang, "quranLockHint")}>
+            <ReaderSection />
+          </Page>
+        )}
+        {page === "general" && (
+          <Page title={t(lang, "settingsGeneral")} hint={t(lang, "settingsGeneralHint")}>
+            <DisplaySection />
+            <SystemSection />
+          </Page>
+        )}
+      </div>
+    </div>
   );
 }
 
 function Page({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
   return (
-    <section className="flex flex-col gap-3.5">
+    <section className="flex max-w-[640px] flex-col gap-5">
       <div>
-        <h3 className="text-lg font-bold text-accent">{title}</h3>
-        {hint && <p className="mt-0.5 text-xs text-ink-soft">{hint}</p>}
+        <h2 className="text-[1.4rem] font-extrabold">{title}</h2>
+        {hint && <p className="mt-1 text-sm text-ink-soft">{hint}</p>}
       </div>
       {children}
     </section>
@@ -187,14 +161,12 @@ function Choice<T extends string>({
   onChange: (value: T) => void;
 }) {
   return (
-    <div role="radiogroup" className="inline-flex max-w-full flex-wrap gap-[3px] rounded-[10px] border border-line bg-tile p-[3px]">
+    <div role="radiogroup" className="seg max-w-full flex-wrap">
       {options.map((opt) => (
         <label
           key={opt.value}
-          className={`cursor-pointer rounded-lg px-3.5 py-1.5 text-sm transition-all has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-gold ${
-            value === opt.value ? "font-bold text-on-gold" : "hover:text-ink"
-          }`}
-          style={value === opt.value ? { background: "var(--accent-gradient)" } : undefined}
+          aria-checked={value === opt.value}
+          className="seg-item has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-gold"
         >
           <input
             type="radio"
@@ -219,15 +191,14 @@ function Toggle({ label, checked, onChange }: { label: string; checked: boolean;
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className="flex items-center justify-between gap-4 rounded-xl border border-line bg-tile px-4 py-3 text-start text-sm transition-colors hover:border-gold/50"
+      className="flex items-center justify-between gap-4 border-b border-line py-3 text-start text-[0.95rem] transition-colors hover:text-ink"
     >
       <span>{label}</span>
       <span
-        className={`relative h-6 w-[46px] shrink-0 rounded-full transition-colors duration-200 ${checked ? "" : "bg-line"}`}
-        style={checked ? { background: "var(--accent-gradient)", boxShadow: "var(--accent-glow)" } : undefined}
+        className={`relative h-6 w-[44px] shrink-0 rounded-full transition-colors duration-200 ${checked ? "bg-gold" : "bg-raised-2"}`}
       >
         <span
-          className={`absolute top-[3px] h-[18px] w-[18px] rounded-full bg-surface shadow transition-[inset-inline-start] duration-200 ${
+          className={`absolute top-[3px] h-[18px] w-[18px] rounded-full bg-surface transition-[inset-inline-start] duration-200 ${
             checked ? "start-[25px]" : "start-[3px]"
           }`}
         />
@@ -735,7 +706,7 @@ function WidgetSection() {
 
   return (
     <Group title={t(lang, "widget")}>
-      <div className="flex justify-center rounded-xl border border-line bg-veil p-4">
+      <div className="flex justify-center rounded-xl border border-line bg-tile p-4">
         <WidgetPreview size={widget.size} scale={previewScale} />
       </div>
 
@@ -754,7 +725,8 @@ function WidgetSection() {
                   selected ? "ring-2 ring-gold" : "ring-1 ring-line hover:ring-ink-soft"
                 }`}
               >
-                <div className="pointer-events-none h-[52px] w-[132px] overflow-hidden rounded-md mx-auto">
+                {/* LTR box so the top-left scale origin keeps the preview inside the frame in RTL too. */}
+                <div dir="ltr" className="pointer-events-none h-[52px] w-[132px] overflow-hidden rounded-md mx-auto">
                   <div className="h-[116px] w-[300px] origin-top-left" style={{ transform: "scale(0.44)" }}>
                     <WidgetCard size="standard" theme={theme} opacity={100} locked buttons={false} />
                   </div>

@@ -146,6 +146,20 @@ const ckb = {
   soundHint: "بانگ، زەنگ و ئاگادارکردنەوەی پێشوەختە.",
   displayHint: "زمان، ڕووکار و کاتژمێر.",
   widgetHint: "ڕووکار و قەبارەی ویجێتی سەر دێسکتۆپ.",
+  officialBadge: "تەوقیتی فەرمی",
+  obStep: "{n} لە ٣",
+  obWelcome: "بەخێربێیت بۆ سەجدە",
+  obWelcomeHint: "زمانێک هەڵبژێرە. کاتەکانی بانگ بەبێ ئینتەرنێت لەسەر کۆمپیوتەرەکەت هەژمار دەکرێن.",
+  obCity: "لە کوێ نوێژ دەکەیت؟",
+  obSound: "کاتی بانگ چۆن ئاگادارت بکەینەوە؟",
+  obSoundAdhanHint: "لە کاتی هەموو بانگێک",
+  obSoundChimeHint: "کورت و ئارام",
+  obSoundSilentHint: "تەنها ئاگادارکردنەوە",
+  obWidget: "ویجێت لەسەر دێسکتۆپ پیشان بدە",
+  obWidgetHint: "هەمیشە لە سەرەوەی پەنجەرەکانی ترە",
+  obNext: "بەردەوامبە",
+  obBack: "گەڕانەوە",
+  obStart: "دەستپێبکە",
 };
 
 type Dict = typeof ckb;
@@ -289,6 +303,20 @@ const ar: Dict = {
   soundHint: "الأذان والتنبيه والتذكير المسبق.",
   displayHint: "اللغة والمظهر والساعة.",
   widgetHint: "مظهر وحجم أداة سطح المكتب.",
+  officialBadge: "التوقيت الرسمي",
+  obStep: "{n} من ٣",
+  obWelcome: "أهلاً بك في سجدة",
+  obWelcomeHint: "اختر لغة. تُحسب مواقيت الصلاة على جهازك دون إنترنت.",
+  obCity: "أين تصلّي؟",
+  obSound: "كيف ننبهك عند الأذان؟",
+  obSoundAdhanHint: "عند كل أذان",
+  obSoundChimeHint: "قصير وهادئ",
+  obSoundSilentHint: "إشعار فقط",
+  obWidget: "اعرض الأداة على سطح المكتب",
+  obWidgetHint: "تبقى دائماً فوق النوافذ الأخرى",
+  obNext: "متابعة",
+  obBack: "رجوع",
+  obStart: "ابدأ",
 };
 
 const en: Dict = {
@@ -430,6 +458,20 @@ const en: Dict = {
   soundHint: "Adhan, chime and reminders.",
   displayHint: "Language, theme and clock.",
   widgetHint: "Theme and size of the desktop widget.",
+  officialBadge: "Official timetable",
+  obStep: "Step {n} of 3",
+  obWelcome: "Welcome to Sajda",
+  obWelcomeHint: "Pick a language. Prayer times are calculated on your computer, with no internet needed.",
+  obCity: "Where do you pray?",
+  obSound: "How should we tell you it is time?",
+  obSoundAdhanHint: "At every prayer",
+  obSoundChimeHint: "Short and quiet",
+  obSoundSilentHint: "A notification only",
+  obWidget: "Show the widget on the desktop",
+  obWidgetHint: "It stays above your other windows",
+  obNext: "Continue",
+  obBack: "Back",
+  obStart: "Start",
 };
 
 const dicts: Record<Lang, Dict> = { ckb, ar, en };

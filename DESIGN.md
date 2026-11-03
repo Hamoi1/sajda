@@ -28,7 +28,7 @@ paper warms.
 
 ## Rules
 
-1. **Gold is scarce.** It marks the next prayer cell, the countdown, the active
+1. **Gold is scarce and flat** (no gradients, no glow). It marks the next prayer row, the countdown, the primary button, the active
    tab, and progress. If everything is gold, nothing is.
 2. **Deep indigo carries structure.** Title bar, navigation, tiles and the
    progress band are deep panels; content sits on `--surface`.

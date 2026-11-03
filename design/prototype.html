@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="ckb" dir="rtl">
+<head>
+<meta charset="utf-8"><title>Sajda v3 prototype</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800&family=Noto+Naskh+Arabic:wght@400;600&display=swap">
+<style>
+:root{
+  --night:#0a0f1e; --surface:#0f1630; --raised:#161f3d; --raised-2:#1d2850;
+  --line:rgba(255,255,255,.08); --line-2:rgba(255,255,255,.14);
+  --ink:#f3f1ea; --ink-soft:#a7aec6; --ink-muted:#6c7493;
+  --gold:#dfb85b; --gold-soft:rgba(223,184,91,.14); --on-gold:#0a0f1e;
+  --paper:#f4f1ea; --paper-2:#fbf9f4; --paper-line:#e2dccd; --pink:#141a33; --pink-soft:#535c7c; --bronze:#94701f; --bronze-fill:#c9a04a;
+  --sans:"Vazirmatn",system-ui,sans-serif; --naskh:"Noto Naskh Arabic",serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:#05070f;min-height:100vh;display:flex;flex-direction:column;align-items:center;gap:24px;padding:24px 16px}
+.screen:not(.current){display:none !important}
+.screen{box-shadow:0 30px 80px rgba(0,0,0,.6);border-radius:12px}
+
+[data-name]{cursor:pointer}
+.screen[data-name]{cursor:default}
+.proto{direction:ltr;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:960px}
+.proto button{font:13px/1 var(--sans);color:#a7aec6;background:#111833;border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:7px 12px;cursor:pointer}
+.proto button[aria-current=true]{background:#dfb85b;color:#0a0f1e;border-color:#dfb85b}
+.proto button:focus-visible,[data-name]:focus-visible{outline:2px solid #dfb85b;outline-offset:2px}
+.hint-p{color:#6c7493;font-size:13px;direction:ltr}
+.screen{direction:rtl;width:900px;height:620px;background:var(--surface);color:var(--ink);display:flex;flex-direction:column;overflow:hidden;position:relative}
+.light{background:var(--paper);color:var(--pink)}
+.bar{height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid var(--line);flex-shrink:0}
+.light .bar{border-color:var(--paper-line)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px}
+.brand svg{color:var(--gold)}
+.light .brand svg{color:var(--bronze)}
+.tabs{display:flex;gap:2px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:3px}
+.light .tabs{background:#ebe6da;border-color:var(--paper-line)}
+.tab{font-size:13px;padding:5px 14px;border-radius:7px;color:var(--ink-soft)}
+.light .tab{color:var(--pink-soft)}
+.tab.on{background:var(--raised-2);color:var(--ink);font-weight:600}
+.light .tab.on{background:var(--paper-2);color:var(--pink)}
+.ctrls{display:flex;gap:4px;direction:ltr}
+.ic{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;color:var(--ink-soft)}
+.light .ic{color:var(--pink-soft)}
+.body{flex:1;display:flex;min-height:0}
+.hero{flex:1.15;padding:44px 44px 28px;display:flex;flex-direction:column;justify-content:space-between}
+.label{font-size:17px;color:var(--ink-soft)}
+.light .label{color:var(--pink-soft)}
+.count{font-size:104px;line-height:1;font-weight:800;color:var(--gold);letter-spacing:-2px;direction:ltr;text-align:right;margin-top:6px;font-variant-numeric:tabular-nums}
+.light .count{color:var(--bronze)}
+.at{font-size:16px;color:var(--ink-soft);margin-top:10px}
+.kilim{display:flex;gap:5px;margin-top:26px;direction:rtl}
+.d{width:9px;height:9px;transform:rotate(45deg);border:1.5px solid var(--line-2)}
+.d.f{background:var(--gold);border-color:var(--gold)}
+.light .d{border-color:#cfc6b1}.light .d.f{background:var(--bronze-fill);border-color:var(--bronze-fill)}
+.dates{display:flex;flex-direction:column;gap:3px;font-size:14px;color:var(--ink-soft)}
+.light .dates{color:var(--pink-soft)}
+.dates b{color:var(--ink);font-size:16px;font-weight:700}
+.light .dates b{color:var(--pink)}
+.board{width:330px;border-inline-start:1px solid var(--line);padding:22px 20px;display:flex;flex-direction:column;gap:6px;background:rgba(0,0,0,.12)}
+.light .board{border-color:var(--paper-line);background:#efebe1}
+.row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:10px;font-size:16px}
+.row .t{font-weight:700;direction:ltr;font-variant-numeric:tabular-nums}
+.row.past{color:var(--ink-muted)}
+.light .row.past{color:#9a9eb2}
+.row.next{background:var(--gold-soft);box-shadow:inset -3px 0 0 var(--gold)}
+.row.next .t,.row.next .n{color:var(--gold)}
+.light .row.next{background:rgba(201,160,74,.16);box-shadow:inset -3px 0 0 var(--bronze)}
+.light .row.next .t,.light .row.next .n{color:var(--bronze)}
+.row .r{display:flex;align-items:center;gap:14px}
+.place{margin-top:auto;padding:14px 14px 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-size:14px}
+.light .place{border-color:var(--paper-line)}
+.place b{font-size:17px}
+.chip{font-size:12px;padding:3px 10px;border-radius:999px;border:1px solid var(--line-2);color:var(--ink-soft)}
+.light .chip{border-color:#d6cdb8;color:var(--pink-soft)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;padding:0 22px;border-radius:10px;font-weight:700;font-size:15px;background:var(--gold);color:var(--on-gold)}
+.ghost{background:transparent;color:var(--ink);border:1px solid var(--line-2)}
+.ob{flex:1;display:flex;flex-direction:column;padding:56px 72px 40px}
+.step{font-size:13px;color:var(--ink-muted)}
+.h1{font-size:34px;font-weight:800;margin-top:10px;line-height:1.3}
+.sub{font-size:16px;color:var(--ink-soft);margin-top:8px;max-width:520px;line-height:1.7}
+.choices{display:flex;gap:14px;margin-top:36px}
+.choice{flex:1;height:120px;border:1px solid var(--line-2);border-radius:14px;padding:18px;display:flex;flex-direction:column;justify-content:space-between;background:var(--raised)}
+.choice.on{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
+.choice .big{font-size:24px;font-weight:700}
+.choice .small{font-size:13px;color:var(--ink-soft)}
+.obfoot{margin-top:auto;display:flex;justify-content:space-between;align-items:center}
+.dots{display:flex;gap:6px}.dots i{width:22px;height:4px;border-radius:2px;background:var(--line-2)}.dots i.on{background:var(--gold)}
+.search{margin-top:28px;height:48px;border-radius:12px;border:1px solid var(--line-2);background:var(--night);display:flex;align-items:center;gap:10px;padding:0 16px;font-size:15px;color:var(--ink-soft)}
+.list{margin-top:12px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.li{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid var(--line);font-size:15px}
+.li:last-child{border-bottom:0}
+.li small{color:var(--ink-muted);font-size:13px}
+.li.on{background:var(--gold-soft)}
+.li.on b{color:var(--gold)}
+.seg{display:flex;gap:8px}
+.pill{font-size:14px;padding:7px 16px;border-radius:999px;border:1px solid var(--line-2);color:var(--ink-soft)}
+.pill.on{background:var(--gold);border-color:var(--gold);color:var(--on-gold);font-weight:700}
+.az{flex:1;padding:22px 32px;display:flex;flex-direction:column;gap:14px;overflow:hidden}
+.card{background:var(--raised);border:1px solid var(--line);border-radius:14px;padding:20px 22px;display:flex;flex-direction:column;gap:12px}
+.card.done{border-color:rgba(223,184,91,.4)}
+.ar{font-family:var(--naskh);font-size:21px;line-height:2;color:var(--ink)}
+.meta{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--ink-muted)}
+.ctr{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--ink)}
+.ctr .n{min-width:46px;height:30px;padding:0 12px;border-radius:999px;background:var(--raised-2);display:flex;align-items:center;justify-content:center;font-size:14px}
+.card.done .ctr .n{background:var(--gold);color:var(--on-gold)}
+.tb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px}
+.ring{width:270px;height:270px;border-radius:50%;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring svg{position:absolute;inset:0}
+.ring .num{font-size:96px;font-weight:800;color:var(--gold);line-height:1}
+.ring .of{font-size:15px;color:var(--ink-soft);margin-top:6px}
+.tfoot{width:100%;display:flex;justify-content:space-between;align-items:center;padding:0 32px 24px;font-size:14px;color:var(--ink-soft)}
+.hint{font-size:13px;color:var(--ink-muted)}
+.set{flex:1;display:flex;min-height:0}
+.nav{width:220px;border-inline-end:1px solid var(--line);padding:20px 12px;display:flex;flex-direction:column;gap:2px;background:rgba(0,0,0,.14)}
+.nv{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;font-size:14px;color:var(--ink-soft)}
+.nv.on{background:var(--raised-2);color:var(--ink);font-weight:600;box-shadow:inset -3px 0 0 var(--gold)}
+.pane{flex:1;padding:26px 34px;display:flex;flex-direction:column;gap:18px;overflow:hidden}
+.ph{font-size:22px;font-weight:800}
+.ps{font-size:14px;color:var(--ink-soft);margin-top:4px}
+.field{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--line);font-size:15px}
+.field small{display:block;font-size:12.5px;color:var(--ink-muted);margin-top:2px}
+.sel{height:36px;min-width:190px;border-radius:9px;border:1px solid var(--line-2);background:var(--night);display:flex;align-items:center;justify-content:space-between;padding:0 12px;font-size:14px}
+.segc{display:flex;background:var(--night);border:1px solid var(--line-2);border-radius:9px;padding:3px}
+.segc span{padding:5px 14px;font-size:13px;border-radius:6px;color:var(--ink-soft)}
+.segc span.on{background:var(--raised-2);color:var(--ink);font-weight:600}
+.sw{width:40px;height:22px;border-radius:999px;background:var(--raised-2);position:relative;display:flex;align-items:center;padding:3px;justify-content:flex-start}
+.sw i{width:16px;height:16px;border-radius:50%;background:var(--ink-soft);display:block}
+.sw.on{background:var(--gold);justify-content:flex-end}.sw.on i{background:var(--on-gold)}
+.wgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.wt{height:74px;border-radius:10px;border:1px solid var(--line-2);padding:10px;display:flex;flex-direction:column;justify-content:space-between;font-size:12px;color:var(--ink-soft)}
+.wt.on{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+.sw1{height:22px;border-radius:6px}
+.wcanvas{background:#1a2238;padding:40px;display:flex;flex-direction:row;gap:28px;align-items:flex-end;flex-wrap:wrap}
+.w{border-radius:16px;background:linear-gradient(160deg,#1d2850,#0f1630);border:1px solid rgba(244,228,196,.22);color:var(--ink);padding:14px 16px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.w .wn{font-size:13px;color:var(--ink-soft)}
+.w .wc{font-size:30px;font-weight:800;color:var(--gold);direction:ltr;text-align:right;line-height:1.1}
+.wband{height:3px;border-radius:2px;background:rgba(255,255,255,.12);position:relative;overflow:hidden}
+.wband i{position:absolute;top:0;bottom:0;right:0;left:40%;background:var(--gold)}
+.wrows{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.wr{font-size:11.5px;color:var(--ink-soft);display:flex;flex-direction:column;gap:2px;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,.04)}
+.wr b{color:var(--ink);font-size:13px;direction:ltr;text-align:right}
+.wr.on{background:var(--gold)}.wr.on,.wr.on b{color:var(--on-gold)}
+.reader{background:#0b0f1d}
+.rd{flex:1;display:flex;flex-direction:column;align-items:center;padding:30px 80px 26px;gap:18px}
+.sura{font-family:var(--naskh);font-size:22px;color:var(--gold)}
+.rframe{flex:1;width:100%;border:1px solid rgba(223,184,91,.25);border-radius:18px;padding:30px 40px;display:flex;align-items:center}
+.ayat{font-family:var(--naskh);font-size:27px;line-height:2.25;text-align:center;color:var(--ink)}
+.ayat em{font-style:normal;color:var(--gold);font-size:20px}
+.rfoot{width:100%;display:flex;justify-content:space-between;align-items:center;font-size:14px;color:var(--ink-soft)}
+.lockbar{width:220px;height:4px;border-radius:2px;background:rgba(255,255,255,.1);position:relative}
+.lockbar i{position:absolute;top:0;bottom:0;right:0;left:45%;background:var(--gold);border-radius:2px}
+</style>
+</head>
+<body>
+<nav class="proto" aria-label="Screens"></nav>
+<p class="hint-p">Click the gold buttons, tabs, settings and widget icons. Arrow keys step through screens.</p>
+
+<section class="screen" data-name="01 Onboarding — Language">
+  <div class="bar"><div class="brand"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M15.5 3.2A9 9 0 1 0 20.8 15 7 7 0 1 1 15.5 3.2z" fill="#dfb85b"/></svg>سەجدە</div>
+    <div class="ctrls"><div class="ic"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#a7aec6" stroke-width="1.6"><path d="M2 2l10 10M12 2L2 12"/></svg></div></div></div>
+  <div class="ob">
+    <p class="step">١ لە ٣</p>
+    <h1 class="h1">بەخێربێیت بۆ سەجدە</h1>
+    <p class="sub">زمانێک هەڵبژێرە. کاتەکانی بانگ بەبێ ئینتەرنێت لەسەر کۆمپیوتەرەکەت هەژمار دەکرێن.</p>
+    <div class="choices">
+      <div class="choice on"><span class="small">Kurdî · Sorani</span><span class="big">کوردی</span></div>
+      <div class="choice"><span class="small">Arabic</span><span class="big">العربية</span></div>
+      <div class="choice" style="direction:ltr"><span class="small">English</span><span class="big">English</span></div>
+    </div>
+    <div class="obfoot"><div class="btn" data-name="cta-next">بەردەوامبە</div><div class="dots"><i class="on"></i><i></i><i></i></div></div>
+  </div>
+</section>
+
+<section class="screen" data-name="02 Onboarding — City">
+  <div class="bar"><div class="brand"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M15.5 3.2A9 9 0 1 0 20.8 15 7 7 0 1 1 15.5 3.2z" fill="#dfb85b"/></svg>سەجدە</div><div class="ctrls"><div class="ic"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#a7aec6" stroke-width="1.6"><path d="M2 2l10 10M12 2L2 12"/></svg></div></div></div>
+  <div class="ob">
+    <p class="step">٢ لە ٣</p>
+    <h1 class="h1">لە کوێ نوێژ دەکەیت؟</h1>
+    <div class="search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#a7aec6" stroke-width="1.6"><circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/></svg>ڕانیە</div>
+    <div class="list">
+      <div class="li on"><b>ڕانیە</b><small>کوردستان · تەوقیتی فەرمی</small></div>
+      <div class="li"><span>قەڵادزێ</span><small>کوردستان</small></div>
+      <div class="li"><span>سلێمانی</span><small>کوردستان · تەوقیتی فەرمی</small></div>
+    </div>
+    <div class="obfoot"><div style="display:flex;gap:10px"><div class="btn" data-name="cta-next">بەردەوامبە</div><div class="btn ghost" data-name="cta-back">گەڕانەوە</div></div><div class="dots"><i class="on"></i><i class="on"></i><i></i></div></div>
+  </div>
+</section>
+
+<section class="screen" data-name="03 Onboarding — Adhan">
+  <div class="bar"><div class="brand"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M15.5 3.2A9 9 0 1 0 20.8 15 7 7 0 1 1 15.5 3.2z" fill="#dfb85b"/></svg>سەجدە</div><div class="ctrls"><div class="ic"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#a7aec6" stroke-width="1.6"><path d="M2 2l10 10M12 2L2 12"/></svg></div></div></div>
+  <div class="ob">
+    <p class="step">٣ لە ٣</p>
+    <h1 class="h1">کاتی بانگ چۆن ئاگادارت بکەینەوە؟</h1>
+    <div class="choices">
+      <div class="choice on"><span class="small">لە کاتی هەموو بانگێک</span><span class="big">بانگی تەواو</span></div>
+      <div class="choice"><span class="small">کورت و ئارام</span><span class="big">زەنگی کورت</span></div>
+      <div class="choice"><span class="small">تەنها ئاگادارکردنەوە</span><span class="big">بێدەنگ</span></div>
+    </div>
+    <div class="field" style="margin-top:22px;border:0"><div>ویجێت لەسەر دێسکتۆپ پیشان بدە<small>هەمیشە لە سەرەوەی پەنجەرەکانی ترە</small></div><div class="sw on"><i></i></div></div>
+    <div class="obfoot"><div style="display:flex;gap:10px"><div class="btn" data-name="cta-start">دەستپێبکە</div><div class="btn ghost" data-name="cta-back">گەڕانەوە</div></div><div class="dots"><i class="on"></i><i class="on"></i><i class="on"></i></div></div>
+  </div>
+</section>
+
+<section class="screen" data-name="04 Home — Dark">
+  <div class="bar">
+    <div class="brand"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M15.5 3.2A9 9 0 1 0 20.8 15 7 7 0 1 1 15.5 3.2z" fill="#dfb85b"/></svg>سەجدە</div>
+    <div class="tabs"><span class="tab on" data-name="tab-home">سەرەکی</span><span class="tab" data-name="tab-azkar">ئەذکار</span><span class="tab" data-name="tab-tasbih">تەسبیح</span></div>
+    <div class="ctrls">
+      <div class="ic"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#a7aec6" stroke-width="1.6"><path d="M2 2l10 10M12 2L2 12"/></svg></div>
+      <div class="ic"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#a7aec6" stroke-width="1.6"><path d="M2 7h10"/></svg></div>
+      <div class="ic" data-name="btn-widget"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#a7aec6" stroke-width="1.6"><rect x="2" y="4" width="12" height="8" rx="1.5"/><path d="M2 9.5h12"/></svg></div>
+      <div class="ic" data-name="btn-settings"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#a7aec6" stroke-width="1.6"><path d="M2 4h7M12 4h2M2 12h2M7 12h7M9 2.5v3M7 10.5v3"/></svg></div>
+    </div>
+  </div>
+  <div class="body">
+    <div class="hero">
+      <div>
+        <p class="label">ماوە بۆ بانگی بەیانی</p>
+        <p class="count">7:18:21</p>
+        <p class="at">کاتژمێر 5:03 AM</p>
+        <div class="kilim"><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i></div>
+      </div>
+      <div class="dates"><b>دووشەممە</b><span>٢ی تشرینی دووەم ٢٠٢٦</span><span>٢٢ی جومادای یەکەم ١٤٤٨</span><span>١١ی سەرماوەز ٢٧٢٦</span></div>
+    </div>
+    <div class="board">
+      <div class="row next"><span class="n">بەیانی</span><span class="r"><span class="t">5:03 AM</span><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#dfb85b" stroke-width="1.5"><path d="M4 11V7a4 4 0 0 1 8 0v4l1 1.5H3zM6.5 14h3"/></svg></span></div>
+      <div class="row"><span>خۆرهەڵاتن</span><span class="r"><span class="t">6:25 AM</span><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#6c7493" stroke-width="1.5"><path d="M4 11V7a4 4 0 0 1 8 0v4l1 1.5H3zM2 2l12 12"/></svg></span></div>
+      <div class="row"><span>نیوەڕۆ</span><span class="r"><span class="t">11:51 AM</span><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#a7aec6" stroke-width="1.5"><path d="M4 11V7a4 4 0 0 1 8 0v4l1 1.5H3zM6.5 14h3"/></svg></span></div>
+      <div class="row"><span>عەسر</span><span class="r"><span class="t">2:43 PM</span><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#a7aec6" stroke-width="1.5"><path d="M4 11V7a4 4 0 0 1 8 0v4l1 1.5H3zM6.5 14h3"/></svg></span></div>
+      <div class="row"><span>مەغریب</span><span class="r"><span class="t">5:13 PM</span><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#a7aec6" stroke-width="1.5"><path d="M4 11V7a4 4 0 0 1 8 0v4l1 1.5H3zM6.5 14h3"/></svg></span></div>
+      <div class="row"><span>عیشا</span><span class="r"><span class="t">6:29 PM</span><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#a7aec6" stroke-width="1.5"><path d="M4 11V7a4 4 0 0 1 8 0v4l1 1.5H3zM6.5 14h3"/></svg></span></div>
+      <div class="place"><b>ڕانیە</b><span class="chip">تەوقیتی فەرمی</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="screen light" data-name="05 Home — Light">
+  <div class="bar">
+    <div class="brand"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M15.5 3.2A9 9 0 1 0 20.8 15 7 7 0 1 1 15.5 3.2z" fill="#94701f"/></svg>سەجدە</div>
+    <div class="tabs"><span class="tab on">سەرەکی</span><span class="tab">ئەذکار</span><span class="tab">تەسبیح</span></div>
+    <div class="ctrls">
+      <div class="ic"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#535c7c" stroke-width="1.6"><path d="M2 2l10 10M12 2L2 12"/></svg></div>
+      <div class="ic"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#535c7c" stroke-width="1.6"><path d="M2 7h10"/></svg></div>
+      <div class="ic"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#535c7c" stroke-width="1.6"><rect x="2" y="4" width="12" height="8" rx="1.5"/><path d="M2 9.5h12"/></svg></div>
+      <div class="ic"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#535c7c" stroke-width="1.6"><path d="M2 4h7M12 4h2M2 12h2M7 12h7M9 2.5v3M7 10.5v3"/></svg></div>
+    </div>
+  </div>
+  <div class="body">
+    <div class="hero">
+      <div>
+        <p class="label">ماوە بۆ بانگی عەسر</p>
+        <p class="count">1:12:40</p>
+        <p class="at">کاتژمێر 2:43 PM</p>
+        <div class="kilim"><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i></div>
+      </div>
+      <div class="dates"><b>دووشەممە</b><span>٢ی تشرینی دووەم ٢٠٢٦</span><span>٢٢ی جومادای یەکەم ١٤٤٨</span><span>١١ی سەرماوەز ٢٧٢٦</span></div>
+    </div>
+    <div class="board">
+      <div class="row past"><span>بەیانی</span><span class="t">5:03 AM</span></div>
+      <div class="row past"><span>خۆرهەڵاتن</span><span class="t">6:25 AM</span></div>
+      <div class="row past"><span>نیوەڕۆ</span><span class="t">11:51 AM</span></div>
+      <div class="row next"><span class="n">عەسر</span><span class="t">2:43 PM</span></div>
+      <div class="row"><span>مەغریب</span><span class="t">5:13 PM</span></div>
+      <div class="row"><span>عیشا</span><span class="t">6:29 PM</span></div>
+      <div class="place"><b>ڕانیە</b><span class="chip">تەوقیتی فەرمی</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="screen" data-name="06 Azkar">
+  <div class="bar">
+    <div class="brand"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M15.5 3.2A9 9 0 1 0 20.8 15 7 7 0 1 1 15.5 3.2z" fill="#dfb85b"/></svg>سەجدە</div>
+    <div class="tabs"><span class="tab" data-name="tab-home">سەرەکی</span><span class="tab on" data-name="tab-azkar">ئەذکار</span><span class="tab" data-name="tab-tasbih">تەسبیح</span></div>
+    <div class="ctrls"><div class="ic"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#a7aec6" stroke-width="1.6"><path d="M2 2l10 10M12 2L2 12"/></svg></div><div class="ic"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#a7aec6" stroke-width="1.6"><path d="M2 7h10"/></svg></div><div class="ic" data-name="btn-widget"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#a7aec6" stroke-width="1.6"><rect x="2" y="4" width="12" height="8" rx="1.5"/><path d="M2 9.5h12"/></svg></div><div class="ic" data-name="btn-settings"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#a7aec6" stroke-width="1.6"><path d="M2 4h7M12 4h2M2 12h2M7 12h7M9 2.5v3M7 10.5v3"/></svg></div></div>
+  </div>
+  <div class="az">
+    <div style="display:flex;justify-content:space-between;align-items:center"><div class="seg"><span class="pill on">بەیانیان</span><span class="pill">ئێواران</span><span class="pill">گشتی</span></div><span class="hint">٣ لە ١٢ تەواو بوون</span></div>
+    <div class="card done"><p class="ar">أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ، وَالْحَمْدُ لِلَّهِ، لَا إِلَٰهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ</p><div class="meta"><span>مسلم</span><span class="ctr"><span class="n">١ / ١</span></span></div></div>
+    <div class="card"><p class="ar">سُبْحَانَ اللَّهِ وَبِحَمْدِهِ</p><div class="meta"><span>البخاري، مسلم</span><span class="ctr"><span class="n">٤٠ / ١٠٠</span></span></div></div>
+  </div>
+</section>
+
+<section class="screen" data-name="07 Tasbih">
+  <div class="bar">
+    <div class="brand"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M15.5 3.2A9 9 0 1 0 20.8 15 7 7 0 1 1 15.5 3.2z" fill="#dfb85b"/></svg>سەجدە</div>
+    <div class="tabs"><span class="tab" data-name="tab-home">سەرەکی</span><span class="tab" data-name="tab-azkar">ئەذکار</span><span class="tab on" data-name="tab-tasbih">تەسبیح</span></div>
+    <div class="ctrls"><div class="ic"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#a7aec6" stroke-width="1.6"><path d="M2 2l10 10M12 2L2 12"/></svg></div><div class="ic"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#a7aec6" stroke-width="1.6"><path d="M2 7h10"/></svg></div><div class="ic" data-name="btn-widget"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#a7aec6" stroke-width="1.6"><rect x="2" y="4" width="12" height="8" rx="1.5"/><path d="M2 9.5h12"/></svg></div><div class="ic" data-name="btn-settings"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#a7aec6" stroke-width="1.6"><path d="M2 4h7M12 4h2M2 12h2M7 12h7M9 2.5v3M7 10.5v3"/></svg></div></div>
+  </div>
+  <div class="tb">
+    <div class="seg"><span class="pill on">٣٣</span><span class="pill">٩٩</span><span class="pill">١٠٠</span><span class="pill">٥٠٠</span></div>
+    <div class="ring">
+      <svg width="270" height="270" viewBox="0 0 270 270"><circle cx="135" cy="135" r="126" fill="none" stroke="#25305a" stroke-width="6"/><path d="M135 9 A126 126 0 0 1 259 117" fill="none" stroke="#dfb85b" stroke-width="6" stroke-linecap="round"/></svg>
+      <span class="num">٧</span><span class="of">ئامانج ٣٣</span>
+    </div>
+    <p class="hint">کرتە بکە یان Space دابگرە</p>
+  </div>
+  <div class="tfoot"><span>دەورە ١ · ئەمڕۆ ٤٠</span><div class="btn ghost" style="height:36px;font-size:14px">سفرکردنەوە</div></div>
+</section>
+
+<section class="screen" data-name="08 Settings — Place">
+  <div class="bar"><div class="brand" style="font-size:16px">ڕێکخستنەکان</div><div class="ctrls"><div class="ic" data-name="btn-close-settings"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#a7aec6" stroke-width="1.6"><path d="M2 2l10 10M12 2L2 12"/></svg></div></div></div>
+  <div class="set">
+    <div class="nav"><div class="nv on" data-name="nav-place">شوێن و کات</div><div class="nv">دەنگ</div><div class="nv" data-name="nav-widget">ویجێت</div><div class="nv">خوێندنەوەی قورئان</div><div class="nv">گشتی</div></div>
+    <div class="pane">
+      <div><h2 class="ph">شوێن و کات</h2><p class="ps">شار، شێوازی هەژمارکردن و ڕێکخستنی خولەکی.</p></div>
+      <div class="field"><div>شار<small>کاتەکان لەسەر ئەم شوێنە هەژمار دەکرێن</small></div><div class="sel"><span>ڕانیە</span><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#a7aec6" stroke-width="1.5"><path d="M3 4.5l3 3 3-3"/></svg></div></div>
+      <div class="field"><div>شێوازی هەژمارکردن</div><div class="sel"><span>تەوقیتی کوردستان</span><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#a7aec6" stroke-width="1.5"><path d="M3 4.5l3 3 3-3"/></svg></div></div>
+      <div class="field"><div>مەزهەب (عەسر)</div><div class="segc"><span class="on">شافیعی</span><span>حەنەفی</span></div></div>
+      <div class="field"><div>کاتژمێر</div><div class="segc"><span class="on">١٢ کاتژمێری</span><span>٢٤ کاتژمێری</span></div></div>
+      <div class="field" style="border:0"><div>گۆڕینی خولەکی هەر بانگێک<small>بۆ یەکخستن لەگەڵ تەوقیتی مزگەوتەکەت</small></div><div class="btn ghost" style="height:36px;font-size:14px">دەستکاری</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="screen" data-name="09 Settings — Widget">
+  <div class="bar"><div class="brand" style="font-size:16px">ڕێکخستنەکان</div><div class="ctrls"><div class="ic" data-name="btn-close-settings"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#a7aec6" stroke-width="1.6"><path d="M2 2l10 10M12 2L2 12"/></svg></div></div></div>
+  <div class="set">
+    <div class="nav"><div class="nv" data-name="nav-place">شوێن و کات</div><div class="nv">دەنگ</div><div class="nv on" data-name="nav-widget">ویجێت</div><div class="nv">خوێندنەوەی قورئان</div><div class="nv">گشتی</div></div>
+    <div class="pane">
+      <div><h2 class="ph">ویجێت</h2><p class="ps">ڕووکار، قەبارە و ڕوونی.</p></div>
+      <div class="wgrid">
+        <div class="wt on"><div class="sw1" style="background:#1d2850"></div>شەو و زێڕ</div>
+        <div class="wt"><div class="sw1" style="background:#4a5689"></div>شووشە</div>
+        <div class="wt"><div class="sw1" style="background:#f4f1ea"></div>کلاسیک</div>
+        <div class="wt"><div class="sw1" style="background:#7a2e22"></div>کلیم</div>
+        <div class="wt"><div class="sw1" style="background:#2a2f3f"></div>سادە</div>
+        <div class="wt"><div class="sw1" style="background:#05070f"></div>نیوەشەو</div>
+      </div>
+      <div class="field"><div>قەبارە</div><div class="segc"><span>بچووک</span><span class="on">ئاسایی</span><span>گەورە</span><span>زۆر گەورە</span></div></div>
+      <div class="field"><div>ڕوونی پاشبنەما<small>دەق هەمیشە ڕوون دەمێنێتەوە</small></div><div style="width:190px;height:4px;border-radius:2px;background:#1d2850;display:flex;justify-content:flex-end"><div style="width:70%;height:4px;background:#dfb85b;border-radius:2px"></div></div></div>
+      <div class="field" style="border:0"><div>جێگیرکردنی شوێن</div><div class="sw on"><i></i></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="screen reader" data-name="10 Reader — Quran lock">
+  <div class="rd">
+    <p class="sura">سُورَةُ المُلْك</p>
+    <div class="rframe"><p class="ayat">تَبَارَكَ الَّذِي بِيَدِهِ الْمُلْكُ وَهُوَ عَلَىٰ كُلِّ شَيْءٍ قَدِيرٌ <em>﴿١﴾</em> الَّذِي خَلَقَ الْمَوْتَ وَالْحَيَاةَ لِيَبْلُوَكُمْ أَيُّكُمْ أَحْسَنُ عَمَلًا ۚ وَهُوَ الْعَزِيزُ الْغَفُورُ <em>﴿٢﴾</em></p></div>
+    <div class="rfoot"><span>پەڕەی ٥٦٢</span><div style="width:220px;height:4px;border-radius:2px;background:#1d2850;display:flex;justify-content:flex-end"><div style="width:55%;height:4px;background:#dfb85b;border-radius:2px"></div></div><div class="btn" style="height:38px" data-name="btn-reader-done">تەواو بوو</div></div>
+  </div>
+</section>
+
+<section class="screen wcanvas" data-name="11 Widget — Sizes">
+  <div class="w" style="width:224px;height:92px"><span class="wn">بەیانی · 5:03 AM</span><span class="wc">7:18:21</span><div style="height:3px;border-radius:2px;background:#2a3460;display:flex;justify-content:flex-end"><div style="width:60%;height:3px;border-radius:2px;background:#dfb85b"></div></div></div>
+  <div class="w" style="width:300px;height:116px"><div style="display:flex;justify-content:space-between"><span class="wn">ماوە بۆ بەیانی</span><span class="wn">ڕانیە</span></div><span class="wc" style="font-size:38px">7:18:21</span><div style="height:3px;border-radius:2px;background:#2a3460;display:flex;justify-content:flex-end"><div style="width:60%;height:3px;border-radius:2px;background:#dfb85b"></div></div></div>
+  <div class="w" style="width:380px;height:224px"><div style="display:flex;justify-content:space-between"><span class="wn">ماوە بۆ بەیانی</span><span class="wn">ڕانیە</span></div><span class="wc" style="font-size:52px">7:18:21</span><div class="wrows"><div class="wr on">بەیانی<b>5:03</b></div><div class="wr">نیوەڕۆ<b>11:51</b></div><div class="wr">عەسر<b>2:43</b></div></div><div style="height:3px;border-radius:2px;background:#2a3460;display:flex;justify-content:flex-end"><div style="width:60%;height:3px;border-radius:2px;background:#dfb85b"></div></div></div>
+  <div class="btn ghost" data-name="btn-back-home" style="height:36px;font-size:14px">گەڕانەوە بۆ سەرەکی</div>
+</section>
+
+<section class="screen" data-name="12 Home — English (LTR)" dir="ltr" style="direction:ltr">
+  <div class="bar">
+    <div class="brand"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M15.5 3.2A9 9 0 1 0 20.8 15 7 7 0 1 1 15.5 3.2z" fill="#dfb85b"/></svg>Sajda</div>
+    <div class="tabs"><span class="tab on">Home</span><span class="tab">Azkar</span><span class="tab">Tasbih</span></div>
+    <div class="ctrls"><div class="ic"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#a7aec6" stroke-width="1.6"><path d="M2 4h7M12 4h2M2 12h2M7 12h7M9 2.5v3M7 10.5v3"/></svg></div><div class="ic"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#a7aec6" stroke-width="1.6"><rect x="2" y="4" width="12" height="8" rx="1.5"/><path d="M2 9.5h12"/></svg></div><div class="ic"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#a7aec6" stroke-width="1.6"><path d="M2 7h10"/></svg></div><div class="ic"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#a7aec6" stroke-width="1.6"><path d="M2 2l10 10M12 2L2 12"/></svg></div></div>
+  </div>
+  <div class="body">
+    <div class="hero">
+      <div><p class="label">Time left until Maghrib</p><p class="count" style="text-align:left">0:42:05</p><p class="at">at 5:13 PM</p>
+        <div class="kilim" style="direction:ltr"><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d f"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i></div></div>
+      <div class="dates"><b>Monday</b><span>2 November 2026</span><span>22 Jumada al-Ula 1448</span></div>
+    </div>
+    <div class="board">
+      <div class="row past"><span>Fajr</span><span class="t">5:03 AM</span></div>
+      <div class="row past"><span>Sunrise</span><span class="t">6:25 AM</span></div>
+      <div class="row past"><span>Dhuhr</span><span class="t">11:51 AM</span></div>
+      <div class="row past"><span>Asr</span><span class="t">2:43 PM</span></div>
+      <div class="row next" style="box-shadow:inset 3px 0 0 #dfb85b"><span class="n">Maghrib</span><span class="t">5:13 PM</span></div>
+      <div class="row"><span>Isha</span><span class="t">6:29 PM</span></div>
+      <div class="place"><b>Erbil</b><span class="chip">Official timetable</span></div>
+    </div>
+  </div>
+</section>
+<script>
+const screens=[...document.querySelectorAll('.screen')];
+const byNo=n=>screens.findIndex(s=>s.dataset.name.startsWith(n));
+const flows={
+  '01':{'cta-next':'02'},
+  '02':{'cta-next':'03','cta-back':'01'},
+  '03':{'cta-start':'04','cta-back':'02'},
+  '*':{'tab-home':'04','tab-azkar':'06','tab-tasbih':'07','btn-settings':'08','btn-widget':'11','btn-close-settings':'04','nav-place':'08','nav-widget':'09','btn-reader-done':'04','btn-back-home':'04'}
+};
+const nav=document.querySelector('.proto');
+let cur=0;
+function show(i){cur=(i+screens.length)%screens.length;screens.forEach((s,j)=>s.classList.toggle('current',j===cur));[...nav.children].forEach((b,j)=>b.setAttribute('aria-current',String(j===cur)));}
+screens.forEach((s,i)=>{const b=document.createElement('button');b.type='button';b.textContent=s.dataset.name;b.onclick=()=>show(i);nav.append(b);});
+document.querySelectorAll('.screen [data-name]').forEach(el=>{el.tabIndex=0;el.setAttribute('role','button');});
+function go(el){const s=el.closest('.screen');const no=s.dataset.name.slice(0,2);const key=el.dataset.name;const to=(flows[no]||{})[key]||flows['*'][key];if(to)show(byNo(to));}
+document.addEventListener('click',e=>{const el=e.target.closest('.screen [data-name]');if(el)go(el);});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.matches('.screen [data-name]'))go(e.target);if(e.key==='ArrowRight')show(cur+1);if(e.key==='ArrowLeft')show(cur-1);});
+show(0);
+</script>
+</body>
+</html>

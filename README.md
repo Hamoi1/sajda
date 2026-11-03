@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshot-main.png" width="720" alt="Main window in dark indigo night theme: a huge gold countdown to Fajr in Ranya, official timetable badge, and the six prayer times docked at the bottom">
+  <img src="docs/screenshot-main.png" width="720" alt="Main window in the dark theme: a large gold countdown, a woven progress band, and the six prayer times on a mosque board">
 </p>
 
 ---

@@ -114,17 +114,14 @@ export function AzkarView() {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex items-center gap-2 px-6 pt-3">
+      <div className="flex items-center gap-2 px-8 pt-5">
         {CATEGORIES.map((cat) => (
           <button
             key={cat}
             type="button"
             aria-pressed={category === cat}
             onClick={() => setCategory(cat)}
-            className={`rounded-full px-4 py-1.5 text-sm transition-all ${
-              category === cat ? "font-bold text-on-gold" : "bg-tile text-ink-soft hover:text-ink"
-            }`}
-            style={category === cat ? { background: "var(--accent-gradient)", boxShadow: "var(--accent-glow)" } : undefined}
+            className="pill"
           >
             {t(lang, CAT_LABEL[cat])}
           </button>
@@ -138,14 +135,14 @@ export function AzkarView() {
         </span>
       </div>
 
-      <div className="mx-6 mt-3 h-1 shrink-0 overflow-hidden rounded bg-tile-2">
+      <div className="mx-8 mt-4 h-[3px] shrink-0 overflow-hidden rounded bg-raised-2">
         <div
           className="h-full rounded bg-gold transition-[width] duration-500"
           style={{ width: `${items.length ? (doneCount / items.length) * 100 : 0}%` }}
         />
       </div>
 
-      <ul className="mt-3 min-h-0 flex-1 space-y-3 overflow-y-auto px-6 pb-5">
+      <ul className="mt-4 min-h-0 flex-1 space-y-3 overflow-y-auto px-8 pb-6">
         {items.map((zikr, i) => {
           const count = safeCounts[i];
           const done = count >= zikr.repeat;
@@ -156,16 +153,8 @@ export function AzkarView() {
                 onClick={() => bump(i)}
                 aria-label={t(lang, "azkarTapToCount")}
                 className={`w-full rounded-[14px] border px-[26px] py-[20px] text-start transition-all active:scale-[0.992] ${
-                  done ? "border-gold" : "border-line bg-tile hover:bg-tile-2"
+                  done ? "border-gold/60 bg-raised" : "border-line bg-raised hover:border-line-strong"
                 }`}
-                style={
-                  done
-                    ? {
-                        background: "linear-gradient(180deg, var(--surface) 0%, var(--accent-muted) 160%)",
-                        boxShadow: "var(--accent-glow)",
-                      }
-                    : undefined
-                }
               >
                 <div className="flex items-start justify-between gap-4">
                   <p lang="ar" dir="rtl" className="quran-text flex-1 text-end text-xl text-ink">
@@ -176,9 +165,8 @@ export function AzkarView() {
                   <p className="text-xs text-ink-muted">{zikr.ref}</p>
                   <span
                     className={`tabular flex shrink-0 items-center gap-1 rounded-full px-4 py-1 text-xs font-bold transition-colors ${
-                      done ? "text-on-gold" : "border border-line bg-surface-2 text-ink-soft"
+                      done ? "bg-gold text-on-gold" : "bg-raised-2 text-ink-soft"
                     }`}
-                    style={done ? { background: "var(--accent-gradient)" } : undefined}
                   >
                     {done ? <IconCheck width={12} height={12} /> : null}
                     {done ? t(lang, "azkarDone") : t(lang, "azkarRepeatN", { n: zikr.repeat - count })}

@@ -82,17 +82,14 @@ export function TasbihView() {
 
   return (
     <div className="flex h-full min-h-0 flex-col items-center px-6 pb-5">
-      <div className="flex items-center gap-2 pt-3">
+      <div className="flex items-center gap-2 pt-5">
         {TARGETS.map((n) => (
           <button
             key={n}
             type="button"
             aria-pressed={state.target === n}
             onClick={() => setState((s) => ({ ...s, target: n, count: 0 }))}
-            className={`tabular rounded-full px-4 py-1.5 text-sm transition-all ${
-              state.target === n ? "font-bold text-on-gold" : "bg-tile text-ink-soft hover:text-ink"
-            }`}
-            style={state.target === n ? { background: "var(--accent-gradient)", boxShadow: "var(--accent-glow)" } : undefined}
+            className="pill tabular"
           >
             {localDigits(lang, n)}
           </button>
@@ -103,18 +100,18 @@ export function TasbihView() {
         type="button"
         onClick={tick}
         aria-label={t(lang, "tasbihTapHint")}
-        className="group relative mt-4 grid min-h-0 w-full flex-1 place-items-center rounded-[18px] border border-line bg-tile transition-colors hover:bg-tile-2 active:bg-gold/20"
+        className="group relative mt-2 grid min-h-0 w-full flex-1 place-items-center rounded-[18px] transition-colors active:bg-tile"
       >
         {/* The ring fills toward the target as you count. */}
         <svg viewBox="0 0 200 200" className="pointer-events-none absolute inset-0 m-auto h-[min(72%,340px)] w-auto" aria-hidden="true">
-          <circle cx="100" cy="100" r={R} fill="none" stroke="var(--tile-2)" strokeWidth="5" />
+          <circle cx="100" cy="100" r={R} fill="none" stroke="var(--raised-2)" strokeWidth="4" />
           <circle
             cx="100"
             cy="100"
             r={R}
             fill="none"
             stroke="var(--gold)"
-            strokeWidth="5"
+            strokeWidth="4"
             strokeLinecap="round"
             strokeDasharray={CIRC}
             strokeDashoffset={CIRC * (1 - progress)}
@@ -133,6 +130,7 @@ export function TasbihView() {
         </div>
       </button>
 
+      <p className="mt-1 text-xs text-ink-muted">{t(lang, "tasbihTapHint")}</p>
       <div className="mt-3 flex w-full items-center justify-between text-sm text-ink-soft">
         <span>
           {t(lang, "tasbihCycles")}: <strong className="text-ink">{localDigits(lang, state.cycles)}</strong> · {t(lang, "tasbihDaily")}:{" "}
@@ -141,7 +139,7 @@ export function TasbihView() {
         <button
           type="button"
           onClick={reset}
-          className="rounded-lg border border-line bg-tile px-4 py-2 text-sm transition-colors hover:border-gold"
+          className="btn-ghost text-sm"
         >
           {t(lang, "tasbihReset")}
         </button>

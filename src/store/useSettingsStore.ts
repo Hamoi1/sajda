@@ -36,6 +36,7 @@ export const DEFAULT_SETTINGS: Settings = {
   widget: { visible: true, alwaysOnTop: true, opacity: 92, locked: false, theme: "indigoGold", size: "standard" },
   reader: DEFAULT_READER,
   updateCheck: true,
+  onboarded: false,
 };
 
 interface SettingsActions {
@@ -94,9 +95,12 @@ export const useSettingsStore = create<SettingsState>()(
         const saved = (persisted ?? {}) as Partial<Settings>;
         // A method key saved by an older version may no longer exist — reset it.
         const method = saved.method && METHOD_KEYS.includes(saved.method) ? saved.method : current.method;
+        // Anyone with saved settings already set the app up; only fresh installs see onboarding.
+        const onboarded = saved.onboarded ?? Object.keys(saved).length > 0;
         return {
           ...current,
           ...saved,
+          onboarded,
           method,
           offsets: { ...current.offsets, ...saved.offsets },
           muted: { ...current.muted, ...saved.muted },
