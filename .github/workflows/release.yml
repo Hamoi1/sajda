@@ -1,59 +1,43 @@
 name: Release
 
-# Two ways in:
-#   1. Actions tab -> Bump version (sets the version, tags, and starts this).
-#   2. By hand: push a tag that matches src-tauri/tauri.conf.json, e.g.
-#        git tag v2.1.0 && git push origin v2.1.0
-# Installers land on a draft release with generated notes and checksums;
-# review it, then publish. The landing page and the in-app update check only
-# see published releases.
+# Push a version tag to release:
+#   npm run version:set -- 2.1.0   (then commit)
+#   git tag v2.1.0 && git push origin main v2.1.0
 on:
   push:
     tags: ["v*"]
-  workflow_dispatch:
 
-# Only the release needs write access; nothing else runs here.
 permissions:
   contents: write
 
-concurrency:
-  group: release-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   build:
-    name: Build (${{ matrix.name }})
-    # A dispatch from a branch would publish a release named after the branch.
-    if: startsWith(github.ref, 'refs/tags/v')
+    name: ${{ matrix.name }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - name: Windows x64
+          - name: Windows
             os: windows-latest
             args: ""
           - name: macOS Apple Silicon
             os: macos-latest
             args: --target aarch64-apple-darwin
-            rust-target: aarch64-apple-darwin
+            target: aarch64-apple-darwin
           - name: macOS Intel
             os: macos-latest
             args: --target x86_64-apple-darwin
-            rust-target: x86_64-apple-darwin
+            target: x86_64-apple-darwin
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 45
     steps:
-      # Pinned by tag; supply chain is dependabot-monitored.
       - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
       - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.rust-target }}
+          targets: ${{ matrix.target }}
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
@@ -61,68 +45,55 @@ jobs:
       - uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Signs updater bundles once bundle.createUpdaterArtifacts is on
-          # (see docs/REDESIGN_PLAN.md, phase 4). Unused until then.
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: Sajda ${{ github.ref_name }}
-          releaseBody: Building…
+          releaseBody: Building...
+          # Stays a draft until every platform is uploaded; the publish job releases it.
           releaseDraft: true
-          prerelease: false
           args: ${{ matrix.args }}
 
-  finish:
-    name: Notes and checksums
+  publish:
     needs: build
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
       TAG: ${{ github.ref_name }}
-      REPO: ${{ github.repository }}
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-          persist-credentials: false
 
       - name: Checksums
         run: |
-          mkdir dl && cd dl
-          gh release download "$TAG" --repo "$REPO" --pattern "*.exe" --pattern "*.msi" --pattern "*.dmg"
-          sha256sum * > SHA256SUMS.txt
-          gh release upload "$TAG" SHA256SUMS.txt --repo "$REPO" --clobber
+          mkdir dl
+          gh release download "$TAG" --dir dl --pattern "*.exe" --pattern "*.msi" --pattern "*.dmg"
+          (cd dl && sha256sum * > ../SHA256SUMS.txt)
+          gh release upload "$TAG" SHA256SUMS.txt --clobber
 
-      - name: Release notes
+      - name: Notes and publish
         run: |
-          # Previous published tag, so the notes cover only this release.
-          prev=$(gh release list --repo "$REPO" --exclude-drafts --limit 1 --json tagName --jq '.[0].tagName // empty')
-          args=(-f tag_name="$TAG")
-          [ -n "$prev" ] && args+=(-f previous_tag_name="$prev")
-          changes=$(gh api "repos/$REPO/releases/generate-notes" "${args[@]}" --jq .body)
-          # Commits pushed straight to main never appear in generated notes,
-          # so list the conventional ones that users would notice.
-          range="$TAG"
-          [ -n "$prev" ] && range="$prev..$TAG"
-          commits=$(git log "$range" --no-merges --format='%s' | grep -E '^(feat|fix|perf)(\(.+\))?!?:' | sed 's/^/- /' || true)
+          prev=$(git tag --sort=-v:refname | grep -E '^v[0-9]' | grep -vx "$TAG" | head -1 || true)
+          range=${prev:+$prev..}$TAG
+          changes=$(git log "$range" --no-merges --format='%s' \
+            | grep -E '^(feat|fix|perf)(\(.+\))?!?:' \
+            | sed -E 's/^[a-z]+(\(.+\))?!?: */- /' || true)
+          v=${TAG#v}
           {
             echo "## Download"
             echo
-            echo "- Windows: \`Sajda_*_x64-setup.exe\` (or the \`.msi\`)"
-            echo "- macOS Apple Silicon (M1 and later): \`Sajda_*_aarch64.dmg\`"
-            echo "- macOS Intel: \`Sajda_*_x64.dmg\`"
+            echo "| System | File |"
+            echo "| --- | --- |"
+            echo "| Windows | \`Sajda_${v}_x64-setup.exe\` |"
+            echo "| macOS (Apple Silicon) | \`Sajda_${v}_aarch64.dmg\` |"
+            echo "| macOS (Intel) | \`Sajda_${v}_x64.dmg\` |"
             echo
-            echo "The builds are not code-signed yet. Windows may show a SmartScreen prompt"
-            echo "(More info, then Run anyway). On macOS, right-click the app and choose Open the first time."
-            echo "Verify a download against \`SHA256SUMS.txt\`."
-            echo
-            if [ -n "$commits" ]; then
-              echo "## What changed"
+            echo "Not code-signed yet. Windows: click **More info → Run anyway**. macOS: right-click the app and choose **Open** the first time."
+            if [ -n "$changes" ]; then
               echo
-              echo "$commits"
+              echo "## Changes"
               echo
+              echo "$changes"
             fi
-            echo "$changes"
           } > notes.md
-          gh release edit "$TAG" --repo "$REPO" --notes-file notes.md
+          gh release edit "$TAG" --notes-file notes.md --draft=false --latest

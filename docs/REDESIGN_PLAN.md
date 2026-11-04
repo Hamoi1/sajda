@@ -97,7 +97,7 @@ Users on 2.0.x keep the old "open GitHub" prompt once, install 2.1 by hand, and 
 - Re-shoot `docs/screenshot-*.png` with `scripts/cdp-shots.mjs`, then copy them into `site/assets/` so the site shows v3.
 
 ### Phase 8: release 2.1.0
-Actions → **Bump version** → `minor`. Review the draft release, then publish.
+`npm run version:set -- minor`, commit, then push a `v*` tag; the release publishes itself.
 
 ---
 
@@ -105,13 +105,10 @@ Actions → **Bump version** → `minor`. Review the draft release, then publish
 
 | File | What it does |
 | --- | --- |
-| `.github/workflows/bump-version.yml` | Manual. Takes `patch`, `minor`, `major` or `2.1.0`; runs `scripts/bump-version.mjs` over package.json, package-lock.json, tauri.conf.json, Cargo.toml and Cargo.lock; commits `chore: release vX.Y.Z` to main, tags it, and starts the release. Refuses an existing tag. |
-| `.github/workflows/release.yml` | On a `v*` tag (or the dispatch above): builds Windows x64, macOS Apple Silicon and macOS Intel into a **draft** release, then a second job uploads `SHA256SUMS.txt` and writes the notes: download guide, `feat`/`fix`/`perf` commits since the last published tag, and GitHub's generated PR list. Signs updater bundles once Phase 4 is on. |
-| `scripts/bump-version.mjs` | The same bump, runnable locally: `node scripts/bump-version.mjs patch`. |
+| `.github/workflows/release.yml` | The only workflow. On a `v*` tag: builds Windows x64, macOS Apple Silicon and macOS Intel, uploads `SHA256SUMS.txt`, writes the notes (download table plus `feat`/`fix`/`perf` commits since the previous tag) and publishes the release as Latest. |
+| `scripts/bump-version.mjs` | `npm run version:set -- 2.1.0` (or `patch`/`minor`/`major`) sets the version in package.json, package-lock.json, tauri.conf.json, Cargo.toml and Cargo.lock. |
 
-Flow: merge work into main → Actions → Bump version → wait ~20 min → open the draft release → Publish. The website and the in-app check only see published releases.
-
-If main has branch protection that blocks the bot's push, either allow GitHub Actions to bypass it or bump locally with the script and push the tag yourself.
+Flow: `npm run version:set -- 2.1.0` → commit `chore: release v2.1.0` → `git tag v2.1.0` → `git push origin main v2.1.0` → wait ~20 min. The release appears published, no manual step.
 
 Later (not in this plan): code signing (Windows Authenticode certificate, Apple Developer ID + notarization) removes the SmartScreen and Gatekeeper prompts; both need paid certificates.
 

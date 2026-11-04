@@ -155,15 +155,21 @@ Installers land in `src-tauri/target/release/bundle/`.
 
 ## 🏷️ Releasing a new version
 
-1. Bump `version` in `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml` and `package.json`.
+1. Set the version everywhere and commit it:
+
+   ```bash
+   npm run version:set -- 2.1.0
+   git commit -am "chore: release v2.1.0"
+   ```
+
 2. Tag and push:
 
    ```bash
-   git tag v2.0.0
-   git push origin v2.0.0
+   git tag v2.1.0
+   git push origin main v2.1.0
    ```
 
-3. The **Release** workflow builds Windows and macOS installers and attaches them to a draft release — review it on GitHub, then publish.
+3. The **Release** workflow builds the Windows and macOS installers and publishes the release with notes and checksums. Nothing to click.
 
 ## 🧱 How it is built
 
